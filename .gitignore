@@ -1,0 +1,37 @@
+# === OS / editor noise ===
+.DS_Store
+*.swp
+*.swo
+*~
+
+# === Secrets / environment ===
+.env
+.env.*
+!.env.example
+getmailrc
+getmail.conf
+*.log
+
+# === Runtime data artifacts (may contain vendor/amount/PII) ===
+ledger.json
+parsed_emails.json
+.seen_messages
+**/actual-cache/
+
+# === Dependencies / build artifacts ===
+node_modules/
+__pycache__/
+*.pyc
+
+# === Local agent config (host-specific, may pre-authorize paths) ===
+.claude/settings.local.json
+
+# === Private agent instructions (user policy: never commit) ===
+CLAUDE.md
+CLAUDE.local.md
+
+# === Real household memory (only the fictional examples are committed) ===
+ai/memory/*
+!ai/memory/*.example.json
+!ai/memory/*.example.md
+!ai/memory/README.md
