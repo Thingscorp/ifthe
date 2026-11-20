@@ -52,9 +52,13 @@ Behavior tests against fixtures, including the budget boundary:
 October spend never leaks into November's summary, and no transaction
 or payee data appears in the budget answer.
 
-Open verification: the definitions follow the SDK's documented
-drop-in format; validating them with the SDK's own commands.py loader
-from a checkout is the last Slice 0 step before any pairing. The
-optional `month` parameter on `home.budget` is accepted by the
-program but not yet declared in its definition file, pending that
-loader check.
+Validation (2026-11-20): all five definitions pass the SDK's own
+commands.py loader from the muse-gadget-sdk checkout: parse, load,
+check_params, and the registered spec, including the optional `month`
+parameter on `home.budget` (declared in its definition; a non-string
+month is rejected by the loader's own check). The loader's directory
+trust check applies when the service runs as root, so the install
+modes above are part of the contract. The SDK's own commands and
+command_guard test files pass in the same checkout (186 passed; one
+test fails only because it drops privileges and cannot execute the
+sandbox's test virtualenv, an artifact of this machine, not the SDK).

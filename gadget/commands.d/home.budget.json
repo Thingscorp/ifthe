@@ -4,5 +4,11 @@
     "/usr/local/bin/ifthe-home",
     "budget"
   ],
-  "timeout_ms": 10000
+  "timeout_ms": 10000,
+  "optional": {
+    "month": {
+      "type": "string",
+      "description": "Month to summarize, YYYY-MM. Defaults to the current month."
+    }
+  }
 }
