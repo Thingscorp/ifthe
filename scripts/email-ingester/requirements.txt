@@ -1,0 +1,2 @@
+mail-parser>=3.15
+ocrmypdf>=16

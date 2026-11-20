@@ -1,0 +1,46 @@
+# getmail6 configuration — Gmail IMAP fetcher
+#
+# Copy to:   ~/.getmail/getmailrc
+# Run:       getmail --getmaildir ~/.getmail
+# Cron:      */30 * * * * getmail --getmaildir ~/.getmail --quiet
+#
+# Authentication options (pick ONE):
+#   Option A: App Password (simpler)
+#     - Google Account → Security → 2-Step Verification → App passwords
+#     - Paste the 16-char password below
+#   Option B: OAuth2 / XOAUTH2 (more complex, no app password needed)
+#     - Requires getmail-gmail-xoauth-tokens helper; see Option B notes below
+
+[retriever]
+type = SimpleIMAPSSLRetriever
+server = imap.gmail.com
+port = 993
+username = YOUR_GMAIL_ADDRESS@gmail.com
+
+# Option A: App Password
+password = XXXX-XXXX-XXXX-XXXX
+
+# Option B: XOAUTH2. Keep `type = SimpleIMAPSSLRetriever` above — getmail6 has NO
+# separate XOAUTH2 retriever class; you enable it with `use_xoauth2 = True`.
+# Comment out the App Password line above, then uncomment these two. The helper's
+# argument is the path to the OAuth2 token JSON file it maintains — NOT your email
+# address. One-time init:
+#   getmail-gmail-xoauth-tokens --init ~/.getmail/gmail-oauth2.json
+# use_xoauth2 = True
+# password_command = ("/path/to/getmail-gmail-xoauth-tokens", "~/.getmail/gmail-oauth2.json")
+
+mailboxes = ("[Gmail]/All Mail",)
+
+[destination]
+# Delivers to Maildir at ~/Mail/inbox/
+type = Maildir
+path = ~/Mail/inbox/
+
+[options]
+# NEVER delete from Gmail — we are read-only observers.
+delete = false
+# Don't re-fetch messages we've already seen.
+read_all = false
+# Fetch newest first so recent bills show up fast.
+received = false
+message_log = ~/.getmail/getmail.log

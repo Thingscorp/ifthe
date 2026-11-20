@@ -1,0 +1,52 @@
+# getmail6 configuration — Gmail IMAP fetcher (CONTAINER variant)
+#
+# For the email-ingester container. EMAIL_CONFIG_DIR (in the deploy .env) is
+# mounted at /getmail inside the container, so:
+#   Copy to:   $EMAIL_CONFIG_DIR/getmailrc   (becomes /getmail/getmailrc)
+#   getmail runs:  getmail --getmaildir /getmail --quiet   (handled by the container)
+#
+# The container loop runs getmail then parse_emails.py on INGEST_INTERVAL — you
+# do NOT set up cron. Just drop this file (filled in) at $EMAIL_CONFIG_DIR/getmailrc.
+#
+# Authentication options (pick ONE):
+#   Option A: App Password (simpler)
+#     - Google Account → Security → 2-Step Verification → App passwords
+#     - Paste the 16-char password below
+#   Option B: OAuth2 / XOAUTH2 (more complex, no app password needed)
+#     - Requires getmail-gmail-xoauth-tokens helper; see Option B notes below
+
+[retriever]
+type = SimpleIMAPSSLRetriever
+server = imap.gmail.com
+port = 993
+username = YOUR_GMAIL_ADDRESS@gmail.com
+
+# Option A: App Password
+password = XXXX-XXXX-XXXX-XXXX
+
+# Option B: XOAUTH2. Keep `type = SimpleIMAPSSLRetriever` above — getmail6 has NO
+# separate XOAUTH2 retriever class; you enable it with `use_xoauth2 = True`.
+# Comment out the App Password line above, then uncomment these two. The helper's
+# argument is the path to the OAuth2 token JSON file it maintains — NOT your email
+# address. One-time init (point it inside the mounted /getmail dir so the token
+# persists across container restarts):
+#   getmail-gmail-xoauth-tokens --init /getmail/gmail-oauth2.json
+# use_xoauth2 = True
+# password_command = ("/path/to/getmail-gmail-xoauth-tokens", "/getmail/gmail-oauth2.json")
+
+mailboxes = ("[Gmail]/All Mail",)
+
+[destination]
+# Delivers to Maildir at /getmail/inbox/ — the path the container expects.
+# parse_emails.py reads from here too (MAILDIR=/getmail/inbox in the compose file).
+type = Maildir
+path = /getmail/inbox/
+
+[options]
+# NEVER delete from Gmail — we are read-only observers.
+delete = false
+# Don't re-fetch messages we've already seen.
+read_all = false
+# Fetch newest first so recent bills show up fast.
+received = false
+message_log = /getmail/getmail.log
