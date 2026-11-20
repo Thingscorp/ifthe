@@ -17,7 +17,7 @@ import path from "path";
 
 // ---- configuration ----------------------------------------------------------
 
-const DATA_ROOT   = process.env.DATA_ROOT          || "/Users/Shared/ifthe";
+const DATA_ROOT   = process.env.DATA_ROOT          || "/srv/ifthe";
 const SERVER_URL  = process.env.ACTUAL_SERVER_URL  || "https://home.local:5006";
 const SERVER_PASS = process.env.ACTUAL_SERVER_PASS;   // required
 const BUDGET_ID   = process.env.ACTUAL_BUDGET_ID;     // required; the sync ID shown in Actual → Settings

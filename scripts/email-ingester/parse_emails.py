@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 
 # All runtime paths derive from DATA_ROOT so the ingester always writes to the
 # same tree Paperless watches and the AI reads. Override any path individually.
-DATA_ROOT    = os.environ.get("DATA_ROOT", "/Users/Shared/ifthe")
+DATA_ROOT    = os.environ.get("DATA_ROOT", "/srv/ifthe")
 MAILDIR      = Path(os.environ.get("MAILDIR",      os.path.expanduser("~/Mail/inbox")))
 PARSED_OUT   = Path(os.environ.get("PARSED_OUT",   os.path.join(DATA_ROOT, "ai/parsed_emails.json")))
 CONSUME_DIR  = Path(os.environ.get("CONSUME_DIR",  os.path.join(DATA_ROOT, "paperless/consume")))
