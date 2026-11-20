@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Locked-down CSP: same-origin only. No external calls, no inline handlers, no framing. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="color-scheme" content="light dark">
+<title>ifthe</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#launcher">Skip to apps</a>
+
+<main id="launcher" class="launcher">
+  <header class="bar">
+    <h1>ifthe&nbsp;Home</h1>
+    <p id="status" class="muted" aria-live="polite">Household apps</p>
+  </header>
+  <section class="apps" aria-label="Applications">
+    <div id="app-grid" class="grid" role="list"></div>
+    <noscript><p class="muted">Enable JavaScript to load the app list, or open each service by its LAN port.</p></noscript>
+  </section>
+  <footer class="foot muted">Read-only ambient layer &middot; nothing here can move money</footer>
+</main>
+
+<!-- Ambient "sleep" screen: shown after idle, hidden on any interaction. Read-only. -->
+<div id="sleep" class="sleep" hidden aria-hidden="true" role="region" aria-label="Ambient sleep screen" tabindex="-1">
+  <div class="bento">
+    <section class="tile tile-clock" aria-label="Time and date">
+      <div id="s-time" class="time">--:--</div>
+      <div id="s-date" class="date"></div>
+      <div id="s-greet" class="greet"></div>
+    </section>
+    <section class="tile tile-agenda" aria-label="Today's agenda">
+      <h2 class="tile-h">Today</h2>
+      <ul id="s-agenda" class="agenda"><li class="muted">Loading&hellip;</li></ul>
+    </section>
+  </div>
+  <p class="wake muted">Touch anywhere to wake</p>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

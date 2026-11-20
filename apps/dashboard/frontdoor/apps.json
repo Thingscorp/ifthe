@@ -1,0 +1,13 @@
+[
+  { "name": "Actual Budget", "desc": "Budgeting", "url": "https://{host}:5006", "accent": "#1d9e75" },
+  { "name": "Nextcloud", "desc": "Files · calendar · photos", "url": "http://{host}:8081", "accent": "#185fa5" },
+  { "name": "Paperless-ngx", "desc": "Document archive", "url": "http://{host}:8000", "accent": "#0f6e56" },
+  { "name": "Mealie", "desc": "Meals · shopping", "url": "http://{host}:9925", "accent": "#ba7517" },
+  { "name": "Homebox", "desc": "Home inventory", "url": "http://{host}:7745", "accent": "#993c1d" },
+  { "name": "Wallos", "desc": "Subscriptions", "url": "http://{host}:8282", "accent": "#534ab7" },
+  { "name": "Stirling PDF", "desc": "PDF tools", "url": "http://{host}:8090", "accent": "#993556" },
+  { "name": "Vaultwarden", "desc": "Passwords · via Tailscale HTTPS", "url": "https://{host}", "accent": "#0c447c" },
+  { "name": "AdGuard Home", "desc": "DNS filtering", "url": "http://{host}:8083", "accent": "#3b6d11" },
+  { "name": "Uptime Kuma", "desc": "Service health", "url": "http://{host}:3001", "accent": "#a32d2d" },
+  { "name": "All apps", "desc": "Glance dashboard", "url": "http://{host}:8085", "accent": "#5f5e5a" }
+]

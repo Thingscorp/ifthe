@@ -1,0 +1,24 @@
+# ifthe front door — static, read-only (file_server serves GET/HEAD only).
+:80 {
+	root * /srv
+	encode gzip
+	file_server
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		-Server
+	}
+
+	# /srv/data holds the read-only agenda.json export (mounted ro). Served as static.
+
+	# --- consumer-readiness seam (LAN: OFF) ------------------------------------
+	# When this goes beyond the LAN, put SSO in front instead of exposing directly.
+	# Uncomment + point at an Authelia/Authentik container on ifthe_net:
+	# forward_auth authelia:9091 {
+	#     uri /api/verify?rd=https://auth.your-tailnet.ts.net
+	#     copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+	# }
+}
