@@ -45,6 +45,10 @@ borrow from: kindle-wall-display, the Home Assistant Lovelace Kindle
 Screensaver, kindle-dashboard. Jailbreak steps depend on model and
 firmware; kindlemodding.org's wizard is the current map.
 
+The `kindle/` folder at the repo root is the working package for this:
+a server script that renders the PNG, the device fetch-and-draw loop,
+and a KUAL extension skeleton.
+
 Without a jailbreak, the Kindle's experimental browser can open the
 briefing page on the LAN for a manual glance, but it sleeps on its own
 schedule and will not hold the page. The jailbreak path is the real one.
