@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the ifthe morning briefing: one calm page for an e-ink panel.
+"""Render the ifthe morning briefing: one page for an e-ink panel.
 
 Reads plain JSON files from a data directory (all optional except that a
 missing file renders a graceful empty state, never an error):

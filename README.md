@@ -1,8 +1,8 @@
 # ifthe
 
-**A quiet home briefing hub.** One small always-on computer in your home runs
-your household services. One calm screen shows the day. An AI analyst reads
-the exports and briefs you, and it can never move your money.
+**A home server with a morning briefing.** One small always-on computer in
+your home runs your household services. One screen shows the day. An AI
+analyst reads the exports and briefs you, and it can never move your money.
 
 No feeds. No scrolling. No cloud account holding your family's data. You look
 at one screen in the morning, you know what today needs, you get on with it.

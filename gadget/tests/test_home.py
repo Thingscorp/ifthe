@@ -58,7 +58,7 @@ def main():
     brief = run("briefing")
     assert brief["ok"] and brief["services"]["ok"] and brief["agenda"]["ok"], brief
 
-    # Missing exports are a calm error, never a crash.
+    # Missing exports are a plain error, never a crash.
     empty = run("services", env_extra={"IFTHE_EXPORT_DIR": "/nonexistent"})
     assert empty["ok"] is False and empty["stale"] is True, empty
 

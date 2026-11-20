@@ -1,6 +1,6 @@
 # The morning briefing
 
-One calm page, rendered from the same read-only exports the rest of ifthe
+One page, rendered from the same read-only exports the rest of ifthe
 already produces. Built for a color e-ink panel by the door, readable in
 any browser.
 
@@ -18,8 +18,8 @@ Inputs (all optional; a missing file renders a graceful empty state):
 | `list.json` | yours to write | any tracked list: shopping, packing, the hunt |
 
 Design rules, in order: one screen, no scrolling at 800x480, no scripts,
-no external assets, nothing that shouts. If a section has nothing true to
-say, it says so quietly and takes less room.
+no external assets. If a section has nothing true to say, it prints one
+short line and takes less room.
 
 The renderer never fetches, writes back, or moves anything. It reads
 files and writes one HTML file.
