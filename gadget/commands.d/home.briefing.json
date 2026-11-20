@@ -1,0 +1,8 @@
+{
+  "description": "Return the whole morning briefing in one call: services, backup, today's agenda, and the budget summary.",
+  "exec": [
+    "/usr/local/bin/ifthe-home",
+    "briefing"
+  ],
+  "timeout_ms": 10000
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Report when the home backup last ran and whether it succeeded, from the latest status export.",
+  "exec": [
+    "/usr/local/bin/ifthe-home",
+    "backup"
+  ],
+  "timeout_ms": 10000
+}

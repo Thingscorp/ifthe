@@ -1,0 +1,8 @@
+{
+  "description": "Report which of the home's self-hosted services are up and which are down, from the latest status export.",
+  "exec": [
+    "/usr/local/bin/ifthe-home",
+    "services"
+  ],
+  "timeout_ms": 10000
+}

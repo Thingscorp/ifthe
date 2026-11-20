@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+"""ifthe home.* commands for the Muse Gadget (Linux Device SDK).
+
+One program, five subcommands. The SDK runs it with the parameters as a
+JSON object on stdin and reads a JSON object back from stdout. These
+commands only read the export files ifthe already produces; they open
+no sockets and write nothing. That is the whole point: the gadget face
+of ifthe keeps the read-only promise of the AI layer.
+
+Data locations (environment overrides):
+  IFTHE_EXPORT_DIR  dir holding agenda.json, status.json, budget.json,
+                    list.json (default /srv/ifthe/exports)
+  IFTHE_LEDGER      the Actual exporter's ledger.json
+                    (default $IFTHE_DATA_ROOT/ai/ledger.json,
+                     DATA_ROOT default /srv/ifthe)
+
+Every answer carries "stale": true when its source file is older than
+STALE_HOURS, so Muse can say "as of" instead of guessing.
+"""
+
+import json
+import os
+import sys
+from datetime import datetime, timezone
+
+STALE_HOURS = 26
+
+
+def export_dir():
+    return os.environ.get("IFTHE_EXPORT_DIR", "/srv/ifthe/exports")
+
+
+def ledger_path():
+    if os.environ.get("IFTHE_LEDGER"):
+        return os.environ["IFTHE_LEDGER"]
+    root = os.environ.get("IFTHE_DATA_ROOT", "/srv/ifthe")
+    return os.path.join(root, "ai", "ledger.json")
+
+
+def read_json(path):
+    """Return (data, stale) or (None, True) when missing or unreadable."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        age = datetime.now(timezone.utc).timestamp() - os.path.getmtime(path)
+        return data, age > STALE_HOURS * 3600
+    except (OSError, ValueError):
+        return None, True
+
+
+def services():
+    data, stale = read_json(os.path.join(export_dir(), "status.json"))
+    if data is None:
+        return {"ok": False, "error": "no status export found", "stale": True}
+    return {
+        "ok": True,
+        "services_up": data.get("services_up"),
+        "services_total": data.get("services_total"),
+        "down": data.get("down", []),
+        "stale": stale,
+    }
+
+
+def backup():
+    data, stale = read_json(os.path.join(export_dir(), "status.json"))
+    if data is None:
+        return {"ok": False, "error": "no status export found", "stale": True}
+    return {
+        "ok": True,
+        "last_run": data.get("backup_last"),
+        "last_ok": data.get("backup_ok"),
+        "stale": stale,
+    }
+
+
+def agenda():
+    data, stale = read_json(os.path.join(export_dir(), "agenda.json"))
+    if data is None:
+        return {"ok": False, "error": "no agenda export found", "stale": True}
+    return {
+        "ok": True,
+        "date": data.get("date"),
+        "events": data.get("events", []),
+        "stale": stale,
+    }
+
+
+def dollars(milliunits):
+    return round((milliunits or 0) / 1000.0, 2)
+
+
+def budget(month=None):
+    """A bounded summary of the ledger, never the ledger itself:
+    account balances by name, this month's spend by top categories,
+    and the month's income total. No transactions, no payees."""
+    data, stale = read_json(ledger_path())
+    if data is None:
+        return {"ok": False, "error": "no ledger export found", "stale": True}
+    month = month or datetime.now().strftime("%Y-%m")
+    cats = {c["id"]: c for c in data.get("categories", [])}
+    spend = {}
+    income = 0
+    for t in data.get("transactions", []):
+        if not str(t.get("date", "")).startswith(month):
+            continue
+        cat = cats.get(t.get("category_id"), {})
+        amount = t.get("amount", 0)
+        if cat.get("is_income"):
+            income += amount
+        elif amount < 0:
+            name = cat.get("name", "Uncategorized")
+            spend[name] = spend.get(name, 0) + (-amount)
+    top = sorted(spend.items(), key=lambda kv: kv[1], reverse=True)[:5]
+    return {
+        "ok": True,
+        "month": month,
+        "accounts": [
+            {"name": a.get("name"), "balance": dollars(a.get("balance"))}
+            for a in data.get("accounts", [])
+            if not a.get("closed")
+        ],
+        "spend_by_category": [
+            {"category": name, "spent": dollars(total)} for name, total in top
+        ],
+        "income_total": dollars(income),
+        "exported_at": data.get("exported_at"),
+        "stale": stale,
+    }
+
+
+def briefing():
+    return {
+        "ok": True,
+        "services": services(),
+        "backup": backup(),
+        "agenda": agenda(),
+        "budget": budget(),
+    }
+
+
+COMMANDS = {
+    "services": lambda p: services(),
+    "backup": lambda p: backup(),
+    "agenda": lambda p: agenda(),
+    "budget": lambda p: budget(p.get("month")),
+    "briefing": lambda p: briefing(),
+}
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in COMMANDS:
+        print(json.dumps({"ok": False, "error": "usage: ifthe-home <%s>"
+                          % "|".join(sorted(COMMANDS))}))
+        return 1
+    try:
+        params = json.load(sys.stdin) if not sys.stdin.isatty() else {}
+    except ValueError:
+        params = {}
+    if not isinstance(params, dict):
+        params = {}
+    print(json.dumps(COMMANDS[sys.argv[1]](params)))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

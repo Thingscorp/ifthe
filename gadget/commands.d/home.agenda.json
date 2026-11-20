@@ -1,0 +1,8 @@
+{
+  "description": "Return today's calendar events for the household, from the latest agenda export.",
+  "exec": [
+    "/usr/local/bin/ifthe-home",
+    "agenda"
+  ],
+  "timeout_ms": 10000
+}

@@ -1,0 +1,8 @@
+{
+  "description": "Summarize the household budget: account balances, this month's spending by top categories, and income total. A bounded summary only, never raw transactions.",
+  "exec": [
+    "/usr/local/bin/ifthe-home",
+    "budget"
+  ],
+  "timeout_ms": 10000
+}
