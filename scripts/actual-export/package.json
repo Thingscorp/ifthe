@@ -1,0 +1,13 @@
+{
+  "name": "actual-export",
+  "version": "1.0.0",
+  "description": "Read-only export of Actual Budget data to ledger.json for AI analysis",
+  "type": "module",
+  "main": "export.js",
+  "scripts": {
+    "export": "node export.js"
+  },
+  "dependencies": {
+    "@actual-app/api": "^6"
+  }
+}
