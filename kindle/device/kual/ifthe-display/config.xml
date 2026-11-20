@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension>
+  <information>
+    <name>ifthe display</name>
+    <version>0.1.0</version>
+    <author>ifthe</author>
+    <id>ifthe-display</id>
+  </information>
+  <menus>
+    <menu type="json">menu.json</menu>
+  </menus>
+</extension>
