@@ -1,0 +1,95 @@
+# ============================================================
+# ifthe :: AI stack  (Phase 4 - OPTIONAL, read-only exporters)
+#   - actual-export   @actual-app/api -> $DATA_ROOT/ai/ledger.json        (daily)
+#   - email-ingester  getmail6 -> bills/receipts -> Paperless consume
+#                     + $DATA_ROOT/ai/parsed_emails.json                  (every 30m)
+#
+# Both are STRICTLY READ-ONLY. Neither writes to Actual, a bank, or any
+# payment rail. The exporter calls only read methods; the ingester runs
+# getmail with delete=false and only writes local JSON + drops PDFs to consume.
+#
+# Build + bring up:   docker compose -f docker-compose.ai.yml up -d --build
+#
+# Prereqs in .env:
+#   exporter  -> ACTUAL_SERVER_PASS, ACTUAL_BUDGET_ID
+#   ingester  -> EMAIL_CONFIG_DIR containing a getmailrc whose
+#                [destination] path = /getmail/inbox/   (see scripts/email-ingester/README.md)
+# ============================================================
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  ifthe_net:
+    external: true
+
+volumes:
+  actual_cache:
+
+services:
+
+  # ---- Actual exporter : budget -> ledger.json (read-only) ------------------
+  actual-export:
+    build: ../../scripts/actual-export
+    image: ifthe/actual-export
+    container_name: actual-export
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    # Lets the container reach Actual running on the host (Docker Desktop + Linux).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # Under Colima, host.docker.internal resolves to the host. If your version doesn't
+      # resolve it, set ACTUAL_SERVER_URL=https://home.local:5006 in .env.
+      ACTUAL_SERVER_URL: "${ACTUAL_SERVER_URL:-https://host.docker.internal:5006}"
+      ACTUAL_SERVER_PASS: "${ACTUAL_SERVER_PASS}"
+      ACTUAL_BUDGET_ID: "${ACTUAL_BUDGET_ID}"
+      ACTUAL_DATA_DIR: /tmp/actual-cache
+      ACTUAL_OUT_FILE: /out/ledger.json
+      EXPORT_INTERVAL: "${EXPORT_INTERVAL:-86400}"
+      # Actual's LAN cert is self-signed; accept it for this localhost/LAN call only.
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    volumes:
+      - "actual_cache:/tmp/actual-cache"
+      - "${DATA_ROOT}/ai:/out"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          node /app/export.js || echo "export failed (will retry next cycle)";
+          sleep "$$EXPORT_INTERVAL";
+        done
+
+  # ---- Email ingester : Gmail bills/receipts -> Paperless + parsed JSON -----
+  email-ingester:
+    build: ../../scripts/email-ingester
+    image: ifthe/email-ingester
+    container_name: email-ingester
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    environment:
+      MAILDIR: /getmail/inbox
+      CONSUME_DIR: /consume
+      PARSED_OUT: /ai/parsed_emails.json
+      STATE_FILE: /ai/.seen_messages
+      INGEST_INTERVAL: "${INGEST_INTERVAL:-1800}"
+    volumes:
+      # getmailrc + Maildir live here; the getmailrc [destination] path MUST be
+      # /getmail/inbox/ so getmail and parse_emails.py agree on the location.
+      # Start from scripts/email-ingester/getmail.conf.docker.example.
+      - "${EMAIL_CONFIG_DIR}:/getmail"
+      - "${DATA_ROOT}/paperless/consume:/consume"
+      - "${DATA_ROOT}/ai:/ai"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          getmail --getmaildir /getmail --quiet || echo "getmail failed";
+          python3 /app/parse_emails.py || echo "parse failed";
+          sleep "$$INGEST_INTERVAL";
+        done

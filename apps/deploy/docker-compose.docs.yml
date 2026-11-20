@@ -1,0 +1,154 @@
+# ============================================================
+# ifthe :: DOCS stack  (Phase 2 - documents & benefits)
+#   - Paperless-ngx  OCR + searchable archive (tax, loans, medical, letters)
+#       backed by postgres + redis, with gotenberg + tika for office/email files
+#   - Stirling PDF   local merge / split / compress / convert
+#
+# Bring up:   docker compose -f docker-compose.docs.yml up -d
+#
+# Storage strategy:
+#   * Document files + index  -> bind mounts under DATA_ROOT (readable + backup-able,
+#     and where the AI/email-ingester will drop files into ./consume)
+#   * Database engine (postgres) -> NAMED volume (DB engines dislike bind mounts,
+#     esp. on macOS; you back these up with a logical dump, not file copy - see README)
+# ============================================================
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  ifthe_net:
+    external: true
+  paperless_backend:
+    internal: true
+
+volumes:
+  paperless_pgdata:
+  paperless_redisdata:
+
+services:
+
+  paperless-redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: paperless-redis
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [paperless_backend]
+    volumes:
+      - "paperless_redisdata:/data"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  paperless-db:
+    image: docker.io/library/postgres:16-alpine
+    container_name: paperless-db
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [paperless_backend]
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: "${PAPERLESS_DB_PASS}"
+    volumes:
+      - "paperless_pgdata:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paperless"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  paperless-gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.34.0  # pin exact 8.x.y (was floating :8); latest stable per GitHub releases + Docker Hub
+    container_name: paperless-gotenberg
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [paperless_backend]
+    # Paperless recommends disabling JS + restricting the file routes.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    # The official gotenberg image ships curl (its Dockerfile installs it in the
+    # base layer specifically "for Docker health checks"), so we can probe the
+    # built-in /health endpoint on :3000 and gate paperless on service_healthy.
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  paperless-tika:
+    image: docker.io/apache/tika:3.3.1.0  # pin == apache/tika:latest digest (Paperless-ngx upstream tracks :latest); same 3.x major
+    container_name: paperless-tika
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [paperless_backend]
+    # No healthcheck on purpose: the apache/tika minimal image (this tag) ships
+    # NEITHER curl NOR wget in its runtime layer (wget lives only in a discarded
+    # build stage) and provides only sh, so any HTTP probe would fail forever and
+    # a service_healthy gate would permanently block paperless. Left service_started.
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15  # migration-gated: bump one major at a time
+    container_name: paperless
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      paperless-db:
+        condition: service_healthy
+      paperless-redis:
+        condition: service_healthy
+      paperless-gotenberg:
+        condition: service_healthy
+      paperless-tika:
+        condition: service_started  # no in-image probe binary; see service note above
+    networks: [ifthe_net, paperless_backend]
+    ports:
+      - "8000:8000"
+    environment:
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_DBHOST: paperless-db
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: "${PAPERLESS_DB_PASS}"
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_ENDPOINT: http://paperless-tika:9998
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://paperless-gotenberg:3000
+      PAPERLESS_URL: "${PAPERLESS_URL}"
+      PAPERLESS_TIME_ZONE: "${TZ}"
+      PAPERLESS_OCR_LANGUAGE: eng
+      PAPERLESS_SECRET_KEY: "${PAPERLESS_SECRET_KEY}"
+      PAPERLESS_ADMIN_USER: "${PAPERLESS_ADMIN_USER}"
+      PAPERLESS_ADMIN_PASSWORD: "${PAPERLESS_ADMIN_PASSWORD}"
+      USERMAP_UID: "${PUID}"
+      USERMAP_GID: "${PGID}"
+    volumes:
+      - "${DATA_ROOT}/paperless/data:/usr/src/paperless/data"
+      - "${DATA_ROOT}/paperless/media:/usr/src/paperless/media"
+      - "${DATA_ROOT}/paperless/export:/usr/src/paperless/export"
+      - "${DATA_ROOT}/paperless/consume:/usr/src/paperless/consume"
+
+  # ---- Stirling PDF : local PDF toolbox -------------------------------------
+  # Image was renamed from frooodle/s-pdf -> stirlingtools/stirling-pdf.
+  stirling-pdf:
+    image: docker.io/stirlingtools/stirling-pdf:2.13.1
+    container_name: stirling-pdf
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    ports:
+      - "8090:8080"
+    environment:
+      DOCKER_ENABLE_SECURITY: "false"
+      LANGS: "en_US"
+    volumes:
+      - "${DATA_ROOT}/stirling/configs:/configs"
+      # To add OCR languages later, populate a tessdata dir with *.traineddata
+      # FIRST, then add:  - "${DATA_ROOT}/stirling/tessdata:/usr/share/tessdata"
+      # (Mounting it empty would hide the image's bundled English data.)

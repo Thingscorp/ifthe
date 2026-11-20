@@ -1,0 +1,81 @@
+# ============================================================
+# ifthe :: FOUNDATION stack  (Phase 1 - safety & reliability)
+#   - Vaultwarden   password / secrets manager
+#   - AdGuard Home  network-wide ad/tracker/DNS filtering
+#   - Uptime Kuma   monitors every service in the suite
+#
+# Bring up:   docker compose -f docker-compose.foundation.yml up -d
+# Logs:       docker compose -f docker-compose.foundation.yml logs -f
+#
+# Prereqs:    .env filled in  +  bash 00-create-dirs.sh has been run
+# ============================================================
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  ifthe_net:
+    external: true
+
+services:
+
+  # ---- Vaultwarden : household password vault -------------------------------
+  # NOTE: Bitwarden apps/extensions REFUSE non-HTTPS servers (except localhost).
+  # Serve this over HTTPS via Tailscale Serve or a reverse proxy. See README.
+  vaultwarden:
+    image: vaultwarden/server:1.36.0
+    container_name: vaultwarden
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    environment:
+      DOMAIN: "${VW_DOMAIN}"
+      ADMIN_TOKEN: "${VW_ADMIN_TOKEN}"
+      # Toggle in .env: "true" only long enough to register accounts, then "false".
+      SIGNUPS_ALLOWED: "${SIGNUPS_ALLOWED:-false}"
+      ROCKET_PORT: "80"
+      TZ: "${TZ}"
+    volumes:
+      - "${DATA_ROOT}/vaultwarden:/data"
+    ports:
+      # Loopback only: this is plain HTTP. Reach it over HTTPS via Tailscale Serve
+      # (tailscale serve --bg --https=443 http://127.0.0.1:8222). Never expose the
+      # vault on the LAN in cleartext.
+      - "127.0.0.1:8222:80"
+
+  # ---- AdGuard Home : DNS-level ad/tracker/malware blocking -----------------
+  # First run: open http://home.local:3000 to run the setup wizard.
+  # In the wizard choose Admin web port = 80 and DNS port = 53.
+  adguard:
+    image: adguard/adguardhome:v0.107.77  # latest stable (== :latest digest 2026-06-02); 0.108 is beta-only
+    container_name: adguard
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    environment:
+      TZ: "${TZ}"
+    volumes:
+      - "${DATA_ROOT}/adguard/work:/opt/adguardhome/work"
+      - "${DATA_ROOT}/adguard/conf:/opt/adguardhome/conf"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"     # Linux: free port 53 first (see README - systemd-resolved)
+      - "3000:3000/tcp" # initial setup wizard only
+      - "8083:80/tcp"   # admin web UI after setup
+
+  # ---- Uptime Kuma : is everything actually up? -----------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    environment:
+      TZ: "${TZ}"
+    volumes:
+      - "${DATA_ROOT}/uptime-kuma:/app/data"
+    ports:
+      - "3001:3001"

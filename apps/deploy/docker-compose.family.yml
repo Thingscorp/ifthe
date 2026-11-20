@@ -1,0 +1,174 @@
+# ============================================================
+# ifthe :: FAMILY stack  (Phase 3 - everyday family ops)
+#   - Nextcloud   files / calendar / tasks / contacts / photos (Memories)
+#       backed by MariaDB + redis
+#   - Wallos      subscription dashboard
+#   - Mealie      recipes / meal plans / shopping lists (SQLite - fine for a household)
+#   - Homebox     home inventory / warranties / serial numbers
+#
+# Bring up:   docker compose -f docker-compose.family.yml up -d
+#
+# After Nextcloud is up, install these from its in-app App Store:
+#   Calendar, Tasks, Contacts, Photos, Memories, Deck (optional)
+# ============================================================
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  ifthe_net:
+    external: true
+  nextcloud_backend:
+    internal: true
+
+volumes:
+  nextcloud_db:
+  nextcloud_redisdata:
+  # Nextcloud code/config (/var/www/html). Named volume = fast on macOS' virtualized
+  # FS; recreated/upgraded by the image. User data stays a bind mount (see below).
+  nextcloud_html:
+
+services:
+
+  # ---- Nextcloud database (named volume; back up via mysqldump) --------------
+  nextcloud-db:
+    image: mariadb:11
+    container_name: nextcloud-db
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [nextcloud_backend]
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    environment:
+      MARIADB_ROOT_PASSWORD: "${NEXTCLOUD_DB_ROOT_PASS}"
+      MARIADB_DATABASE: nextcloud
+      MARIADB_USER: nextcloud
+      MARIADB_PASSWORD: "${NEXTCLOUD_DB_PASS}"
+    volumes:
+      - "nextcloud_db:/var/lib/mysql"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  nextcloud-redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [nextcloud_backend]
+    volumes:
+      - "nextcloud_redisdata:/data"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud:
+    image: nextcloud:34-apache  # migration-gated: bump one major at a time
+    container_name: nextcloud
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+      nextcloud-redis:
+        condition: service_healthy
+    networks: [ifthe_net, nextcloud_backend]
+    ports:
+      - "8081:80"
+    environment:
+      MYSQL_HOST: nextcloud-db
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: "${NEXTCLOUD_DB_PASS}"
+      REDIS_HOST: nextcloud-redis
+      NEXTCLOUD_ADMIN_USER: "${NEXTCLOUD_ADMIN_USER}"
+      NEXTCLOUD_ADMIN_PASSWORD: "${NEXTCLOUD_ADMIN_PASSWORD}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "${NEXTCLOUD_TRUSTED_DOMAINS}"
+      # Keep user data at the image default path so the entrypoint chowns it for us.
+      NEXTCLOUD_DATA_DIR: /var/www/html/data
+      PHP_UPLOAD_LIMIT: 2G
+      PHP_MEMORY_LIMIT: 1G
+      TZ: "${TZ}"
+    volumes:
+      # Code + config on a named volume (fast on macOS' virtualized FS).
+      - "nextcloud_html:/var/www/html"
+      # User files split out to a bind mount under DATA_ROOT => readable + backup-able.
+      - "${DATA_ROOT}/nextcloud/data:/var/www/html/data"
+
+  # ---- Nextcloud background jobs (official /cron.sh sidecar) -----------------
+  # Runs Nextcloud's cron every 5 min. Same image + identical volume mounts as
+  # the nextcloud service (the cron and app containers must share /var/www/html).
+  nextcloud-cron:
+    image: nextcloud:34-apache  # keep in lockstep with the nextcloud service
+    container_name: nextcloud-cron
+    restart: unless-stopped
+    logging: *default-logging
+    entrypoint: /cron.sh
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+      nextcloud-redis:
+        condition: service_healthy
+    networks: [nextcloud_backend]
+    environment:
+      # Match the nextcloud service so cron resolves the same user-data path.
+      NEXTCLOUD_DATA_DIR: /var/www/html/data
+    volumes:
+      # Identical mounts to the nextcloud service (required for shared state).
+      - "nextcloud_html:/var/www/html"
+      - "${DATA_ROOT}/nextcloud/data:/var/www/html/data"
+
+  # ---- Wallos : subscription dashboard --------------------------------------
+  wallos:
+    image: bellamy/wallos:4.9.6
+    container_name: wallos
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    ports:
+      - "8282:80"
+    environment:
+      TZ: "${TZ}"
+    volumes:
+      - "${DATA_ROOT}/wallos/db:/var/www/html/db"
+      - "${DATA_ROOT}/wallos/logos:/var/www/html/images/uploads/logos"
+
+  # ---- Mealie : meal planning + shopping lists ------------------------------
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.19.2
+    container_name: mealie
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    ports:
+      - "9925:9000"
+    environment:
+      ALLOW_SIGNUP: "false"   # create the first user, then keep this false
+      PUID: "${PUID}"
+      PGID: "${PGID}"
+      TZ: "${TZ}"
+      BASE_URL: "${MEALIE_URL:-http://home.local:9925}"
+    volumes:
+      - "${DATA_ROOT}/mealie/data:/app/data"
+
+  # ---- Homebox : home inventory / warranties --------------------------------
+  homebox:
+    image: ghcr.io/sysadminsmedia/homebox:0.26.2
+    container_name: homebox
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [ifthe_net]
+    ports:
+      - "7745:7745"
+    environment:
+      # Toggle in .env: leave "true" to create your first user, then "false".
+      HBOX_OPTIONS_ALLOW_REGISTRATION: "${HOMEBOX_ALLOW_REGISTRATION:-true}"
+      TZ: "${TZ}"
+    volumes:
+      - "${DATA_ROOT}/homebox/data:/data"
