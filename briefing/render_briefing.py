@@ -47,6 +47,29 @@ footer { border-top: 1px solid #c9c3b4; padding-top: 8px; font-size: 13px;
 """
 
 
+
+KINDLE_CSS = """
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #ffffff; color: #000000; font-family: Georgia, serif;
+  width: 1072px; height: 1448px; overflow: hidden; padding: 56px 60px; display: flex;
+  flex-direction: column; }
+header { border-bottom: 4px solid #000; padding-bottom: 22px; }
+.clock { font-size: 150px; font-weight: 700; letter-spacing: -2px;
+  font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+.day { font-size: 44px; margin-top: 6px; }
+main { padding-top: 30px; flex: 1; }
+h2 { font-size: 24px; text-transform: uppercase; letter-spacing: 4px;
+  margin-bottom: 14px; font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+section { margin-bottom: 40px; }
+ul { list-style: none; font-size: 38px; line-height: 1.5; }
+ul .t { display: inline-block; min-width: 190px; padding-right: 22px; }
+ul.money .t { min-width: 300px; }
+.muted { color: #555; }
+.big { font-size: 40px; line-height: 1.45; }
+footer { border-top: 2px solid #000; padding-top: 16px; font-size: 24px;
+  color: #555; display: flex; justify-content: space-between; }
+"""
+
 def load(data_dir, name):
     p = os.path.join(data_dir, name)
     if not os.path.exists(p):
@@ -104,7 +127,7 @@ def list_html(lst):
             f"<ul>{items}</ul></section>")
 
 
-def render(data_dir, now=None):
+def render(data_dir, now=None, profile="panel"):
     now = now or datetime.now()
     agenda = load(data_dir, "agenda.json")
     status = load(data_dir, "status.json")
@@ -113,11 +136,17 @@ def render(data_dir, now=None):
     clock = now.strftime("%-I:%M")
     day = now.strftime("%A, %B %-d")
     month = (budget or {}).get("month", "Money")
-    page = f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<title>ifthe briefing</title><style>{CSS}</style></head>
-<body>
-<header><div class="clock">{clock}</div><div class="day">{esc(day)}</div></header>
+    if profile == "kindle":
+        body = f"""<header><div class="clock">{clock}</div><div class="day">{esc(day)}</div></header>
+<main>
+<section><h2>Today</h2><ul>{agenda_html(agenda)}</ul></section>
+<section><h2>Home</h2>{home_html(status)}</section>
+<section><h2>{esc(month)}</h2><ul class="money">{budget_html(budget)}</ul></section>
+{list_html(lst)}
+</main>"""
+        css = KINDLE_CSS
+    else:
+        body = f"""<header><div class="clock">{clock}</div><div class="day">{esc(day)}</div></header>
 <main>
 <div>
 <section><h2>Today</h2><ul>{agenda_html(agenda)}</ul></section>
@@ -127,8 +156,14 @@ def render(data_dir, now=None):
 <section><h2>Home</h2>{home_html(status)}</section>
 <section><h2>{esc(month)}</h2><ul class="money">{budget_html(budget)}</ul></section>
 </div>
-</main>
-<footer><span><span class="accent">ifthe</span> morning briefing</span>
+</main>"""
+        css = CSS
+    page = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>ifthe briefing</title><style>{css}</style></head>
+<body>
+{body}
+<footer><span>ifthe morning briefing</span>
 <span>Updated {now.strftime("%-I:%M %p")}</span></footer>
 </body></html>"""
     return page
@@ -138,8 +173,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="sample-data")
     ap.add_argument("--out", default="briefing.html")
+    ap.add_argument("--profile", choices=["panel", "kindle"], default="panel")
     args = ap.parse_args()
-    page = render(args.data)
+    page = render(args.data, profile=args.profile)
     with open(args.out, "w") as fh:
         fh.write(page)
     print(f"briefing: wrote {args.out} ({len(page)} bytes)")
