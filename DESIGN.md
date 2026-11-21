@@ -130,6 +130,8 @@ Density is low and type does the talking. The biggest thing on any screen is the
 - Tabular figures wherever a number can change: clocks, agenda times, money.
 - Honest status in the design itself: coming-soon work is shown faded, not hidden.
 
+**The Named Omissions Rule.** The landing page names what ifthe does not do, in one short list, as product facts: no feed, no notifications, no acting on accounts, and an AI layer that cannot move money. Omissions are selling points stated plainly, never softened or hidden in fine print (ev_0fa7f4721cafc04ce4302a9df417fc3c2df9924e3fbc2305bdb270460be4a2dc, ev_41e5c6102262ce01728c7364f2be273b476b6363b04e7e1eaaf6b0360ef02e09).
+
 ## Colors
 
 A warm paper palette with a single muted green accent, extracted from the landing page, the briefing renderer, and the front door. The same sage runs through all three; each surface keeps its own neutrals.
@@ -201,6 +203,14 @@ Three spatial models, one per surface family.
 
 **Front door:** a centered launcher, max-width 1100px, padding clamp(16px, 4vw, 40px). The app grid is repeat(auto-fill, minmax(190px, 1fr)) with a 12px gap. The ambient screen is a two-tile bento (clock, agenda) at max-width 920px, collapsing to one column at 680px.
 
+**The One Screen Rule.** The briefing page is the whole product surface, the way a library is a whole home screen: everything the household needs is on the one page, and there is no navigation away from it, no second screen, and no menu of places to go (ev_d3f926f4ce3370860c7761eebd705e07c66cc98ed17a417338ad6c5ea501a3ce, ev_41e5c6102262ce01728c7364f2be273b476b6363b04e7e1eaaf6b0360ef02e09).
+
+**The Seven Entry Rule.** Where a surface does need a menu or a navigation list, it is one list of at most seven entries in a fixed order, and depth stays shallow: surface, group, item. A second menu, a submenu tree, or an eighth entry is a design change, not an addition (ev_d3f926f4ce3370860c7761eebd705e07c66cc98ed17a417338ad6c5ea501a3ce).
+
+**The Two Systems Rule.** Content is organized two ways only: folders for place (a widget lives in one folder, a pack holds its widgets), and tags or categories for cross-cutting groups (one item can carry several). No third organizing system is added, and a tag state change is visible on the item itself (ev_c436d78e50a67bbc65d79ba8b4ede263814be36f09505b8f32da2f6a6419cffe, ev_d138b83aa0ee0277653291d4ea1f021f1307093a43be3e8e5ade8b757e20dfcb).
+
+**The Weeks Budget Rule.** E-ink profiles are designed on a battery budget stated in weeks, not hours. Refreshes and sync are the named cost against that budget: a change that refreshes a panel more often, or syncs more often, states its cost in those terms before it ships (ev_d208b873983982906d2e7670f2e566e4d12ff72239c5e542e022d9d5ee272958, ev_06edaaf4067cef4112c37e947c6a088b647cf9c6879a490d05b31f9d0d14).
+
 ## Elevation & Depth
 
 The system is flat. There are no box-shadows in any surface's code, and none may be added. Depth comes from hairline borders, tonal layering (white cards on the front door ground, paper behind ink), and one inset outline: landing product images carry a 1px rgba(0,0,0,0.1) outline at -1px offset so pale product shots read against white.
@@ -244,6 +254,8 @@ Sage text with a 1px underline in sage at 25% alpha, offset 2px. Hover deepens b
 ### Buttons and Inputs
 
 The web surfaces have none, by design: the front door is a launcher of links, the briefing is read-only, and the landing's only action is following a link. Do not invent button styles for these surfaces. Hardware buttons on a future panel are unbuilt and undesigned.
+
+**The One Panel Rule.** When a panel or device surface gains controls, the everyday controls live in one panel of at most six controls, reachable in one step, and a control appears only when the hardware supports it: no greyed-out placeholders for absent hardware. Anything rarer goes to settings, which stays one entry in the one menu, two steps from anywhere (ev_ef1c7247792e34bc4d99c39c1e422ab9fdc48f2b8f93f400c59f763f558fccf6).
 
 ## Do's and Don'ts
 
