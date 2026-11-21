@@ -17,6 +17,7 @@ run "dashboard config contracts"        python3 tests/test_dashboard_contracts.p
 run "front-door security/a11y"          python3 tests/test_frontdoor_security.py
 run "briefing widgets"                  python3 tests/test_briefing_widgets.py
 run "pebble to ifthe converter"         python3 tests/test_pebble2ifthe.py
+run "widget repository tools"           python3 tests/test_widget_repository.py
 run "gadget display JPEG"               python3 tests/test_display_jpeg.py
 run "design token drift"                python3 tests/test_design_tokens.py
 
