@@ -53,8 +53,12 @@ widgets on the same path. A local widget with a reserved id replaces
 the built in one. An optional `layout.json` in the data directory can
 reorder widgets and hide them. A folder holding a code file is skipped
 whole, and a bad widget is skipped with one warning line on stderr:
-the page always renders. Settings declarations in `widget.json` are
-validated; v1 does not apply setting values yet.
+the page always renders. Setting values live in `settings.json` in
+the data directory, keyed by widget id: the generic keys `max_items`,
+`show_title`, and `title` are applied to any widget that declares
+them, a value that fails validation falls back to the declared
+default with a warning, and any other declared key validates without
+a rendering effect yet.
 
 ## On a Kindle
 

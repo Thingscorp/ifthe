@@ -242,6 +242,107 @@ with tempfile.TemporaryDirectory() as td:
     check("layout order reorders within the panel main slot",
           page.index("Shopping") < page.index("Today"))
 
+# Settings values: applied generically, validated, with default fallback.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "capped", title="Capped",
+                 data={"items": [f"Pick {i}" for i in range(1, 7)]},
+                 settings=[{"key": "max_items", "type": "select",
+                            "label": "Show at most", "options": ["2", "6"],
+                            "default": "6"}])
+    (data / "settings.json").write_text(json.dumps(
+        {"capped": {"max_items": "2"}}))
+    page, err = render(data)
+    check("max_items setting caps items below the hard budget",
+          "Pick 2" in page and "Pick 3" not in page)
+    check("a valid supplied setting renders without warnings",
+          err == "", err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "headless", title="Headless",
+                 data={"items": ["No heading item"]},
+                 settings=[{"key": "show_title", "type": "toggle",
+                            "label": "Show title", "default": True}])
+    (data / "settings.json").write_text(json.dumps(
+        {"headless": {"show_title": False}}))
+    page, _ = render(data)
+    check("show_title false renders the widget without its heading",
+          "No heading item" in page and "<h2>Headless</h2>" not in page)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "renamed", title="Original heading",
+                 data={"items": ["Renamed item"]},
+                 settings=[{"key": "title", "type": "input",
+                            "label": "Heading", "default": "Original heading"}])
+    (data / "settings.json").write_text(json.dumps(
+        {"renamed": {"title": "Custom heading"}}))
+    page, _ = render(data)
+    check("title setting replaces the widget heading",
+          "<h2>Custom heading</h2>" in page
+          and "Original heading" not in page)
+    (data / "settings.json").write_text(json.dumps(
+        {"renamed": {"title": "T" * 60}}))
+    page, _ = render(data)
+    title_match = re.search(r"<h2>(T+)</h2>", page)
+    check("title setting is truncated to 48 characters",
+          title_match is not None and len(title_match.group(1)) == 48)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "fallback", title="Fallback",
+                 data={"items": [f"Fall {i}" for i in range(1, 7)]},
+                 settings=[{"key": "max_items", "type": "select",
+                            "label": "Show at most", "options": ["2", "6"],
+                            "default": "2"}])
+    (data / "settings.json").write_text(json.dumps(
+        {"fallback": {"max_items": "5"}}))
+    page, err = render(data)
+    check("invalid select value falls back to the declared default",
+          "Fall 2" in page and "Fall 3" not in page)
+    check("rejected setting warns naming the widget and the key",
+          "widget fallback" in err and "max_items" in err
+          and "rejected" in err, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "plain", title="Plain",
+                 data={"items": ["Plain item"]})
+    (data / "settings.json").write_text("{not json")
+    page, err = render(data)
+    check("malformed settings.json is ignored and the page renders",
+          "Plain item" in page and "Today" in page)
+    check("malformed settings.json warns once about settings",
+          "settings" in err, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "narrow", title="Narrow",
+                 data={"items": ["One", "Two", "Three"]},
+                 settings=[{"key": "show_title", "type": "toggle",
+                            "label": "Show title", "default": True}])
+    (data / "settings.json").write_text(json.dumps(
+        {"narrow": {"max_items": "1"},
+         "today": {"show_title": False}}))
+    page, _ = render(data)
+    check("a supplied value for an undeclared key is ignored",
+          "One" in page and "Two" in page and "Three" in page)
+    check("settings entries for a built in widget are ignored",
+          "<h2>Today</h2>" in page)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "greedy", title="Greedy",
+                 data={"items": [f"Grab {i}" for i in range(1, 9)]},
+                 settings=[{"key": "max_items", "type": "input",
+                            "label": "Show at most", "default": "6"}])
+    (data / "settings.json").write_text(json.dumps(
+        {"greedy": {"max_items": "99"}}))
+    page, _ = render(data)
+    check("a max_items value cannot exceed the hard budget",
+          "Grab 6" in page and "Grab 7" not in page)
+
 passed = sum(1 for _, ok, _ in results if ok)
 fails = [(n, d) for n, ok, d in results if not ok]
 print(f"\nbriefing_widgets: {passed}/{len(results)} checks passed")

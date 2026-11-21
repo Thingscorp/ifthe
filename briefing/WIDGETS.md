@@ -146,11 +146,33 @@ Declaration, inside `widget.json`:
 ]
 ```
 
-Types in v1: `toggle`, `select`, `input`. A setting may only shape the
+Types: `toggle`, `select`, `input`. A setting may only shape the
 widget's own data (counts, labels, which lines). It can never widen
-`reads`, change the slot, or turn on a fetch. v1 of the renderer may
-declare support for settings without applying them yet; declarations
-must still validate.
+`reads`, change the slot, or turn on a fetch.
+
+At render time the renderer reads `settings.json` from the data
+directory. A missing file is normal; a malformed one is ignored with
+one warning, and rendering proceeds. For each declared setting, a
+supplied value wins when it validates against the declaration: a
+select value must be one of its options, a toggle value must be true
+or false, an input value must be text. A rejected value warns,
+naming the widget and the key, and the declared default applies.
+Supplied keys the widget never declared are ignored, and built in
+widgets declare no settings, so `settings.json` entries for them
+have no effect.
+
+Three generic keys are applied for any widget that declares them:
+
+| Key | Effect |
+| --- | --- |
+| `max_items` | Caps the widget's rendered lines, items, or status rows at the value, and never above the template's hard budget. |
+| `show_title` | When false, the widget renders without its heading. |
+| `title` | Replaces the widget's heading text, truncated to 48 characters. |
+
+Any other declared key validates and resolves, but has no rendering
+effect yet. Declaring a custom key alone changes nothing; a key
+changes output only when the renderer honors it, as it does the
+three generic keys above.
 
 ## Layout control
 

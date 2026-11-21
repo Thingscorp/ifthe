@@ -11,6 +11,8 @@ missing file renders a graceful empty state, never an error):
   budget.json   {"month": "November", "lines": [{"label": "Left to spend",
                  "value": "$1,240"}]}
   list.json     {"title": "Shopping", "items": ["Eggs", "Coffee"]}
+  settings.json {"<widget id>": {"<setting key>": value}}   (optional;
+                 values for the settings each widget declares)
 
 Sections are widgets. The four built in sections and any folder widgets
 found by the render time scan render through the same path. The widget
@@ -108,6 +110,7 @@ MAX_ITEMS = 6
 MAX_STATUS_LINES = 3
 MAX_TEXT_CHARS = 220
 MAX_GLANCE_CHARS = 48
+MAX_TITLE_CHARS = 48
 ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 EXPORT_RE = re.compile(r"^[a-z0-9]+(?:[-_][a-z0-9]+)*$")
 SETTING_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -229,7 +232,7 @@ def list_html(lst):
             f"<ul>{items}</ul></section>")
 
 
-def valid_lines(data):
+def valid_lines(data, limit=MAX_LINES):
     lines = data.get("lines") if isinstance(data, dict) else None
     valid = []
     if isinstance(lines, list):
@@ -240,10 +243,10 @@ def valid_lines(data):
             value = text_value(entry.get("value"))
             if label is not None and value is not None:
                 valid.append({"label": label, "value": value})
-    return valid[:MAX_LINES]
+    return valid[:limit]
 
 
-def valid_items(data):
+def valid_items(data, limit=MAX_ITEMS):
     items = data.get("items") if isinstance(data, dict) else None
     valid = []
     if isinstance(items, list):
@@ -251,10 +254,10 @@ def valid_items(data):
             value = text_value(item)
             if value is not None:
                 valid.append(value)
-    return valid[:MAX_ITEMS]
+    return valid[:limit]
 
 
-def valid_status_lines(data):
+def valid_status_lines(data, limit=MAX_STATUS_LINES):
     lines = data.get("lines") if isinstance(data, dict) else None
     valid = []
     if isinstance(lines, list):
@@ -267,7 +270,7 @@ def valid_status_lines(data):
             state = entry.get("state")
             valid.append({"text": text,
                           "state": state if state in ("ok", "warn", "muted") else "muted"})
-    return valid[:MAX_STATUS_LINES]
+    return valid[:limit]
 
 
 def builtin_widgets(get_export):
@@ -524,6 +527,85 @@ def load_layout(data_dir):
     return layout
 
 
+def load_settings(data_dir):
+    """Read settings.json from the data directory.
+
+    Shape: an object keyed by widget id, each value an object keyed by
+    setting key. A missing file is normal. A malformed one is ignored
+    with one warning; rendering always proceeds.
+    """
+    path = os.path.join(data_dir, "settings.json")
+    if not os.path.exists(path):
+        return {}
+    data = safe_load_json(path, "settings.json")
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        warn("settings: skipped, settings.json must hold an object keyed by widget id")
+        return {}
+    return data
+
+
+def setting_value_ok(decl, value):
+    kind = decl["type"]
+    if kind == "toggle":
+        return isinstance(value, bool)
+    if kind == "select":
+        return value in (decl.get("options") or [])
+    return isinstance(value, str)
+
+
+def resolve_widget_settings(widget, supplied_all):
+    """Resolve one widget's effective setting values.
+
+    For each declared setting, a supplied value wins when it validates
+    against the declaration; a rejected value warns and falls back to
+    the declared default. Supplied keys the widget never declared are
+    ignored, and widgets with no declarations (the built ins) resolve
+    to nothing, so their settings.json entries have no effect.
+    """
+    manifest = widget["manifest"]
+    declarations = manifest.get("settings") or []
+    supplied = supplied_all.get(manifest["id"])
+    if not isinstance(supplied, dict):
+        supplied = {}
+    effective = {}
+    for decl in declarations:
+        key = decl["key"]
+        if key in supplied:
+            value = supplied[key]
+            if setting_value_ok(decl, value):
+                effective[key] = value
+            else:
+                warn(f"widget {manifest['id']}: setting {key} rejected, using default")
+                if "default" in decl:
+                    effective[key] = decl["default"]
+        elif "default" in decl:
+            effective[key] = decl["default"]
+    widget["settings"] = effective
+
+
+def parse_count(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def widget_limit(widget, hard_limit):
+    """The max_items setting, parsed and clamped to the hard budget."""
+    count = parse_count(widget.get("settings", {}).get("max_items"))
+    if count is None:
+        return hard_limit
+    return max(0, min(count, hard_limit))
+
+
 def sort_widgets(widgets, layout):
     order_index = {wid: i for i, wid in enumerate(layout["order"])}
 
@@ -537,6 +619,9 @@ def sort_widgets(widgets, layout):
 
 
 def widget_title(widget):
+    override = widget.get("settings", {}).get("title")
+    if isinstance(override, str) and override:
+        return override[:MAX_TITLE_CHARS]
     manifest = widget["manifest"]
     if widget.get("title_from_data"):
         title = text_value(widget["data"].get("title"))
@@ -546,11 +631,13 @@ def widget_title(widget):
 
 
 def section_wrap(widget, inner):
+    if widget.get("settings", {}).get("show_title") is False:
+        return f"<section>{inner}</section>"
     return f'<section><h2>{esc(widget_title(widget))}</h2>{inner}</section>'
 
 
 def render_lines_widget(widget):
-    lines = valid_lines(widget["data"])
+    lines = valid_lines(widget["data"], widget_limit(widget, MAX_LINES))
     if lines:
         rows = "\n".join(
             f'<li><span class="t">{esc(line["label"])}</span>{esc(line["value"])}</li>'
@@ -561,16 +648,15 @@ def render_lines_widget(widget):
 
 
 def render_items_widget(widget):
-    items = valid_items(widget["data"])
+    items = valid_items(widget["data"], widget_limit(widget, MAX_ITEMS))
     if not items:
         return ""
     items_html = "\n".join(f"<li>{esc(item)}</li>" for item in items)
-    return (f'<section><h2>{esc(widget_title(widget))}</h2>'
-            f"<ul>{items_html}</ul></section>")
+    return section_wrap(widget, f"<ul>{items_html}</ul>")
 
 
 def render_status_widget(widget):
-    lines = valid_status_lines(widget["data"])
+    lines = valid_status_lines(widget["data"], widget_limit(widget, MAX_STATUS_LINES))
     if lines:
         inner = "".join(
             f'<p class="big {line["state"]}">{esc(line["text"])}</p>'
@@ -602,13 +688,13 @@ def glance_line(widget):
     if candidate is None:
         template = widget["manifest"]["template"]
         if template == "lines":
-            lines = valid_lines(data)
+            lines = valid_lines(data, widget_limit(widget, MAX_LINES))
             candidate = f'{lines[0]["label"]}: {lines[0]["value"]}' if lines else None
         elif template == "items":
-            items = valid_items(data)
+            items = valid_items(data, widget_limit(widget, MAX_ITEMS))
             candidate = items[0] if items else None
         elif template == "status":
-            lines = valid_status_lines(data)
+            lines = valid_status_lines(data, widget_limit(widget, MAX_STATUS_LINES))
             candidate = lines[0]["text"] if lines else None
         elif template == "text":
             candidate = text_value(data.get("text"))
@@ -646,6 +732,9 @@ def render(data_dir, now=None, profile="panel"):
     get_export = make_export_loader(data_dir)
     widgets_by_id = builtin_widgets(get_export)
     widgets_by_id.update(discover_folder_widgets(data_dir, get_export))
+    supplied_settings = load_settings(data_dir)
+    for widget in widgets_by_id.values():
+        resolve_widget_settings(widget, supplied_settings)
     layout = load_layout(data_dir)
     hidden = set(layout["hidden"])
     widgets = [w for wid, w in widgets_by_id.items() if wid not in hidden]
