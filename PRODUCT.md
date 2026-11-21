@@ -20,6 +20,8 @@ ifthe is a home server with a morning briefing. One small always-on computer in 
 
 The overarching goal is a widget system that grows by contribution. The household's services are interconnected systems that publish plain data. Interfaces are translated: one widget definition renders on the panel, the Kindle, the card, and the front door, each at its own size and rules. Widgets are mix-and-match: a widget is a folder of data and settings declarations that a person can write, share, and drop into any ifthe home. The target shape is a public repository of widgets anyone can contribute to, browsed and installed the way the Pebble app store worked, with connections between systems stated as simply as an IFTTT rule: when this source changes, show it on that screen. Simplicity is the bar: if a widget or a connection cannot be understood at a glance, it is not done. Owner ruling, 2026-11-21.
 
+The creation flow is the measure. A person describes a widget to their AI, the AI writes the widget folder, the home renders it, and the person shares it to the repository, in one sitting and a handful of steps. The model is the way Muse lets a person shape their AI character and voice: a few plain choices, an immediate result, no tooling knowledge needed. Time from idea to a rendered, shareable widget is the number this product optimizes. Contributors get a basic profile: their public widgets, and how many homes installed each one. Remix is a first class act: take a public widget, change it, publish your version with credit to the original.
+
 ## Positioning
 
 The AI layer is read-only by construction, and a mechanical guard in the check suite fails the build if an exporter ever gains a money-moving or write call. Neighboring home-server and AI products ask for trust; ifthe removes the capability. The household's data stays on the home network, the repo ships fictional example data only, and the whole product is a template meant to be copied, not a service anyone signs up for.
@@ -48,7 +50,7 @@ Constraints:
 - The one paid extra in the reference home is bank sync (SimpleFIN Bridge, about $15 per year). Everything else is free and open source.
 - Bank and budget answers are summaries with labeled lines, never transactions or payees.
 
-Undecided, recorded as open: the license (not yet picked), the panel hardware (not yet bought), and the gadget pairing (Slice 1 not yet run on a Linux box).
+Undecided, recorded as open: the license (not yet picked), the panel hardware (not yet bought), and the gadget pairing (Slice 1 not yet run on a Linux box). Also open: repository sign-in through Meta's system (owner wish, 2026-11-21; the gadget already pairs the box to the owner's Muse, but a Meta login for the widget repository is a separate path and is unverified).
 
 ## Brand Commitments
 
