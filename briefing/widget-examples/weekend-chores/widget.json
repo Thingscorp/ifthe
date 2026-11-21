@@ -1,0 +1,1 @@
+{"author":"ifthe examples","id":"weekend-chores","order":50,"profiles":["panel","card","kindle"],"reads":[],"settings":[{"default":"6","key":"max_items","label":"Show at most","options":["3","6"],"type":"select"}],"slot":"main","template":"items","title":"Weekend chores","version":"1.0.0"}

@@ -343,6 +343,70 @@ with tempfile.TemporaryDirectory() as td:
     check("a max_items value cannot exceed the hard budget",
           "Grab 6" in page and "Grab 7" not in page)
 
+# Example widgets: shipped in briefing/widget-examples/, a folder the
+# renderer never scans. They render only after a household copies one
+# into a widgets root.
+EXAMPLES = REPO / "briefing" / "widget-examples"
+EXAMPLE_IDS = ("weekend-chores", "house-plants")
+
+# The examples are not picked up by the renderer's own discovery scan,
+# and a plain render shows neither of them.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    records = rb.discover_folder_widgets(
+        str(data), rb.make_export_loader(str(data)))
+    check("discovery scan does not pick up the example widgets",
+          all(wid not in records for wid in EXAMPLE_IDS),
+          ", ".join(sorted(records)))
+    page, _ = render(data)
+    check("a plain render shows neither example widget",
+          "Weekend chores" not in page and "House plants" not in page
+          and "Mow the front yard" not in page
+          and "Tomatoes need water today." not in page)
+
+# Both example manifests pass the renderer's own validator.
+for wid in EXAMPLE_IDS:
+    manifest = json.loads((EXAMPLES / wid / "widget.json").read_text())
+    error = rb.validate_manifest(manifest, wid)
+    check(f"example {wid} manifest passes the validator",
+          error is None, str(error))
+
+# Copied into a data directory's widgets folder, each example renders
+# on the panel profile with its content visible.
+with tempfile.TemporaryDirectory() as td:
+    data, _ = make_case(Path(td))
+    inside = data / "widgets"
+    inside.mkdir()
+    for wid in EXAMPLE_IDS:
+        shutil.copytree(EXAMPLES / wid, inside / wid)
+    page, err = render(data)
+    check("copied examples render without warnings", err == "", err.strip())
+    check("items example renders its heading and items",
+          "<h2>Weekend chores</h2>" in page
+          and "Mow the front yard" in page
+          and "Stack the firewood" in page)
+    check("status example renders its heading and lines",
+          "<h2>House plants</h2>" in page
+          and "Fern watered this morning." in page
+          and "Tomatoes need water today." in page)
+
+# The items example's declared max_items setting applies once copied:
+# a settings.json value caps the list below its full length.
+with tempfile.TemporaryDirectory() as td:
+    data, _ = make_case(Path(td))
+    inside = data / "widgets"
+    inside.mkdir()
+    shutil.copytree(EXAMPLES / "weekend-chores", inside / "weekend-chores")
+    (data / "settings.json").write_text(json.dumps(
+        {"weekend-chores": {"max_items": "3"}}))
+    page, err = render(data)
+    check("example max_items setting caps the copied widget",
+          "Sweep the porch steps" in page
+          and "Take the bins to the curb" not in page
+          and "Stack the firewood" not in page)
+    check("example setting applies without warnings",
+          err == "", err.strip())
+
 passed = sum(1 for _, ok, _ in results if ok)
 fails = [(n, d) for n, ok, d in results if not ok]
 print(f"\nbriefing_widgets: {passed}/{len(results)} checks passed")

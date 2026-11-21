@@ -60,6 +60,11 @@ them, a value that fails validation falls back to the declared
 default with a warning, and any other declared key validates without
 a rendering effect yet.
 
+Two worked examples live in [widget-examples/](widget-examples/): an
+`items` widget that declares a `max_items` setting, and a `status`
+widget. That folder is never scanned; copy a folder into a `widgets/`
+root to use it.
+
 ## On a Kindle
 
 The proven pattern for old Kindles is not the browser. The home server
