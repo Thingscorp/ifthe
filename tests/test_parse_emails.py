@@ -77,7 +77,7 @@ def make_msg(name):
 
 def fake_parse(path):
     return FakeMail(
-        subject="Your bill is ready — amount due",
+        subject="Your bill is ready: amount due",
         text_plain=["Verizon Wireless. Total: $142.87. Payment due by February 1, 2025."],
         from_=[("Verizon Wireless", "no-reply@verizon.com")],
         date=None,

@@ -1,6 +1,6 @@
 # Recommended Colima config for your home server (the ifthe box).
 # Colima is the container runtime here (NOT Docker Desktop). It mounts $HOME writable by
-# default but nothing else — so DATA_ROOT must be under $HOME, OR you add its path here.
+# default but nothing else: so DATA_ROOT must be under $HOME, OR you add its path here.
 #
 # Apply it the safe way (editing the live file directly gets overwritten):
 #   colima start --edit          # paste the mounts/vmType/mountType below, save
@@ -8,7 +8,7 @@
 #   colima start --cpu 4 --memory 8 --vm-type vz --mount-type virtiofs \
 #     --mount /Users/Shared:w
 #
-# mountType immutable after first start — to change it: `colima delete` then recreate.
+# mountType immutable after first start: to change it: `colima delete` then recreate.
 # Autostart on login: install a LaunchAgent that runs `colima start` (see OPERATIONS.md).
 
 cpu: 4
@@ -21,7 +21,7 @@ vmType: vz
 mountType: virtiofs
 
 mounts:
-  - location: "~"        # $HOME — Colima's default; a DATA_ROOT under here just works
+  - location: "~"        # $HOME: Colima's default; a DATA_ROOT under here just works
     writable: true
   # Uncomment to allow DATA_ROOT=/Users/Shared/ifthe:
   # - location: /Users/Shared

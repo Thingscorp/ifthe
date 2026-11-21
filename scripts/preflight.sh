@@ -26,11 +26,11 @@ esac
 
 # Colima (your home server's runtime) mounts $HOME by default but NOT /Users/Shared. If DATA_ROOT is
 # outside $HOME, bind mounts will be EMPTY inside containers unless you've added a Colima
-# mount for it. Warn (don't fail — you may have added the mount via `colima start --edit`).
+# mount for it. Warn (don't fail: you may have added the mount via `colima start --edit`).
 if command -v colima >/dev/null 2>&1; then
   case "$DATA_ROOT" in
     "${HOME:-/nonexistent}"/*) : ;;
-    *) echo "PREFLIGHT WARNING: Colima detected and DATA_ROOT='$DATA_ROOT' is outside \$HOME ($HOME). Colima only mounts paths it's told to — add '- location: $DATA_ROOT' (writable: true) via 'colima start --edit' or bind mounts will be EMPTY in containers. See colima.example.yaml." >&2 ;;
+    *) echo "PREFLIGHT WARNING: Colima detected and DATA_ROOT='$DATA_ROOT' is outside \$HOME ($HOME). Colima only mounts paths it's told to: add '- location: $DATA_ROOT' (writable: true) via 'colima start --edit' or bind mounts will be EMPTY in containers. See colima.example.yaml." >&2 ;;
   esac
 fi
 

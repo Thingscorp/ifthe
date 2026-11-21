@@ -7,7 +7,7 @@ Walks a Maildir, extracts bills / receipts / renewals, and:
   2. Copies (not moves) PDF attachments into CONSUME_DIR
      (/srv/ifthe/paperless/consume/) so Paperless-ngx OCRs them
 
-Read-only toward Gmail — getmail6 delivers messages to Maildir with delete=false.
+Read-only toward Gmail: getmail6 delivers messages to Maildir with delete=false.
 Never writes back to the mail server.
 
 Requirements:  pip install mail-parser ocrmypdf
@@ -71,7 +71,7 @@ def extract_amount(mail) -> float | None:
     """Very basic dollar-amount extraction from subject + body."""
     import re
     text = (mail.subject or "") + " ".join((mail.text_plain or []))
-    # Match $X,XXX.XX or $X.XX — take the first match as the "primary" amount
+    # Match $X,XXX.XX or $X.XX: take the first match as the "primary" amount
     amounts = re.findall(r"\$\s?([\d,]+\.\d{2})", text)
     if amounts:
         return float(amounts[0].replace(",", ""))
@@ -121,7 +121,7 @@ def ocr_and_copy_pdf(src_path: Path, dest_dir: Path, label: str):
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         # OCR failed (already OCR'd / encrypted, etc.) OR ocrmypdf isn't installed
-        # on this host — deliver the original so Paperless still ingests it.
+        # on this host: deliver the original so Paperless still ingests it.
         shutil.copy2(src_path, dest_path)
     return str(dest_path)
 
@@ -157,7 +157,7 @@ def main():
         try:
             mail = mailparser.parse_from_file(str(path))
         except Exception as e:
-            print(f"  skip (parse error): {path.name} — {e}")
+            print(f"  skip (parse error): {path.name}: {e}")
             continue
 
         if not is_bill(mail):

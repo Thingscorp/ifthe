@@ -1,11 +1,11 @@
-# getmail6 configuration — Gmail IMAP fetcher (CONTAINER variant)
+# getmail6 configuration: Gmail IMAP fetcher (CONTAINER variant)
 #
 # For the email-ingester container. EMAIL_CONFIG_DIR (in the deploy .env) is
 # mounted at /getmail inside the container, so:
 #   Copy to:   $EMAIL_CONFIG_DIR/getmailrc   (becomes /getmail/getmailrc)
 #   getmail runs:  getmail --getmaildir /getmail --quiet   (handled by the container)
 #
-# The container loop runs getmail then parse_emails.py on INGEST_INTERVAL — you
+# The container loop runs getmail then parse_emails.py on INGEST_INTERVAL: you
 # do NOT set up cron. Just drop this file (filled in) at $EMAIL_CONFIG_DIR/getmailrc.
 #
 # Authentication options (pick ONE):
@@ -24,10 +24,10 @@ username = YOUR_GMAIL_ADDRESS@gmail.com
 # Option A: App Password
 password = XXXX-XXXX-XXXX-XXXX
 
-# Option B: XOAUTH2. Keep `type = SimpleIMAPSSLRetriever` above — getmail6 has NO
+# Option B: XOAUTH2. Keep `type = SimpleIMAPSSLRetriever` above: getmail6 has NO
 # separate XOAUTH2 retriever class; you enable it with `use_xoauth2 = True`.
 # Comment out the App Password line above, then uncomment these two. The helper's
-# argument is the path to the OAuth2 token JSON file it maintains — NOT your email
+# argument is the path to the OAuth2 token JSON file it maintains: NOT your email
 # address. One-time init (point it inside the mounted /getmail dir so the token
 # persists across container restarts):
 #   getmail-gmail-xoauth-tokens --init /getmail/gmail-oauth2.json
@@ -37,13 +37,13 @@ password = XXXX-XXXX-XXXX-XXXX
 mailboxes = ("[Gmail]/All Mail",)
 
 [destination]
-# Delivers to Maildir at /getmail/inbox/ — the path the container expects.
+# Delivers to Maildir at /getmail/inbox/: the path the container expects.
 # parse_emails.py reads from here too (MAILDIR=/getmail/inbox in the compose file).
 type = Maildir
 path = /getmail/inbox/
 
 [options]
-# NEVER delete from Gmail — we are read-only observers.
+# NEVER delete from Gmail: we are read-only observers.
 delete = false
 # Don't re-fetch messages we've already seen.
 read_all = false

@@ -1,4 +1,4 @@
-# ifthe front door — static, read-only (file_server serves GET/HEAD only).
+# ifthe front door: static, read-only (file_server serves GET/HEAD only).
 :80 {
 	root * /srv
 	encode gzip

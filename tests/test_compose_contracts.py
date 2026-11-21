@@ -92,5 +92,5 @@ if findings:
     for x in findings:
         print("  FAIL " + x)
     sys.exit(1)
-print("PASS — env refs resolved, ports unique, bind mounts all created")
+print("PASS: env refs resolved, ports unique, bind mounts all created")
 sys.exit(0)

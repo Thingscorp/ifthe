@@ -49,9 +49,11 @@ def read_json(path):
 
 
 def services():
-    data, stale = read_json(os.path.join(export_dir(), "status.json"))
+    path = os.path.join(export_dir(), "status.json")
+    data, stale = read_json(path)
     if data is None:
-        return {"ok": False, "error": "no status export found", "stale": True}
+        return {"ok": False,
+                "error": "no status export found: %s" % path, "stale": True}
     return {
         "ok": True,
         "services_up": data.get("services_up"),
@@ -62,9 +64,11 @@ def services():
 
 
 def backup():
-    data, stale = read_json(os.path.join(export_dir(), "status.json"))
+    path = os.path.join(export_dir(), "status.json")
+    data, stale = read_json(path)
     if data is None:
-        return {"ok": False, "error": "no status export found", "stale": True}
+        return {"ok": False,
+                "error": "no status export found: %s" % path, "stale": True}
     return {
         "ok": True,
         "last_run": data.get("backup_last"),
@@ -74,9 +78,11 @@ def backup():
 
 
 def agenda():
-    data, stale = read_json(os.path.join(export_dir(), "agenda.json"))
+    path = os.path.join(export_dir(), "agenda.json")
+    data, stale = read_json(path)
     if data is None:
-        return {"ok": False, "error": "no agenda export found", "stale": True}
+        return {"ok": False,
+                "error": "no agenda export found: %s" % path, "stale": True}
     return {
         "ok": True,
         "date": data.get("date"),
@@ -95,7 +101,9 @@ def budget(month=None):
     and the month's income total. No transactions, no payees."""
     data, stale = read_json(ledger_path())
     if data is None:
-        return {"ok": False, "error": "no ledger export found", "stale": True}
+        return {"ok": False,
+                "error": "no ledger export found: %s" % ledger_path(),
+                "stale": True}
     month = month or datetime.now().strftime("%Y-%m")
     cats = {c["id"]: c for c in data.get("categories", [])}
     spend = {}
@@ -129,13 +137,16 @@ def budget(month=None):
 
 
 def briefing():
-    return {
-        "ok": True,
+    parts = {
         "services": services(),
         "backup": backup(),
         "agenda": agenda(),
         "budget": budget(),
     }
+    answer = {"ok": True}
+    answer.update(parts)
+    answer["stale"] = any(part.get("stale") for part in parts.values())
+    return answer
 
 
 COMMANDS = {

@@ -3,7 +3,7 @@
 Read-only Nextcloud CalDAV → `$DATA_ROOT/dashboard/agenda.json`, which the front-door
 sleep screen reads to show today's agenda. **Never writes to the calendar.**
 
-## Run (containerized — recommended)
+## Run (containerized, recommended)
 Part of `docker-compose.dashboard.yml`. Set in `.env`:
 
 ```bash
@@ -13,7 +13,7 @@ NEXTCLOUD_CALDAV_APP_PASSWORD=xxxx-xxxx-xxxx   # Nextcloud → Security → app 
 AGENDA_INTERVAL=900   # seconds between refreshes
 ```
 
-If those are unset the exporter writes an **empty** agenda and exits 0 — the sleep screen
+If those are unset the exporter writes an **empty** agenda and exits 0; the sleep screen
 then shows "No events today" rather than breaking.
 
 ## How it works

@@ -1,5 +1,5 @@
 /* ifthe front door: config-driven launcher + idle->bento sleep screen.
- * Strictly read-only — no writes, no POST, no money. Same-origin only (CSP). */
+ * Strictly read-only: no writes, no POST, no money. Same-origin only (CSP). */
 (function () {
   "use strict";
 
@@ -25,7 +25,7 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = { greeting: greeting, fmtTime: fmtTime, fmtDate: fmtDate, appUrl: appUrl };
   }
-  if (typeof document === "undefined") return; // imported in node for tests — stop before DOM code
+  if (typeof document === "undefined") return; // imported in node for tests; stop before DOM code
 
   var IDLE_MS = 3 * 60 * 1000; // fade to the sleep screen after 3 min of no interaction
   var host = location.hostname || "home.local";
@@ -39,7 +39,7 @@
       card.className = "card"; card.setAttribute("role", "listitem");
       card.href = appUrl(a.url, host);
       card.target = "_blank"; card.rel = "noopener noreferrer";
-      card.setAttribute("aria-label", a.name + (a.desc ? " — " + a.desc : ""));
+      card.setAttribute("aria-label", a.name + (a.desc ? ": " + a.desc : ""));
       var ic = document.createElement("span");
       ic.className = "ico"; ic.setAttribute("aria-hidden", "true");
       if (a.accent) ic.style.setProperty("--accent", a.accent);
@@ -57,7 +57,7 @@
     .then(renderApps)
     .catch(function () {
       document.getElementById("app-grid").innerHTML =
-        '<p class="muted">Could not load apps.json — edit it to list your services.</p>';
+        '<p class="muted">Could not load apps.json. Edit it to list your services.</p>';
     });
 
   // ---- ambient clock ----
@@ -65,7 +65,7 @@
     var d = new Date();
     document.getElementById("s-time").textContent = fmtTime(d);
     document.getElementById("s-date").textContent = fmtDate(d);
-    document.getElementById("s-greet").textContent = greeting(d.getHours()) + ", ifthes";
+    document.getElementById("s-greet").textContent = greeting(d.getHours());
   }
 
   // ---- today's agenda (read-only export) ----

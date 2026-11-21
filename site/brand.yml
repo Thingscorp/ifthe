@@ -73,3 +73,25 @@ voice:
     - "State honest status: in the works, built, public. Never imply a thing exists before it does."
     - "Bold the traits inside paragraphs, the repebble pattern. No slogans."
     - "Credit sources on the page (design model, SDK, wiki) in the footer or the built-on list."
+
+product_surfaces:
+  note: "Added in the whole-build skill-chain run. The landing section above governs site/; this section governs the product surfaces. A surface that drifts from here is a defect unless its exception is recorded with a reason."
+  briefing:
+    panel: { size: "800x480", bg: "#f7f4ec", ink: "#1c1a17", accent: "#5c6650" }
+    card: { size: "648x480", bg: "#ffffff", ink: "#000000", note: "pure black on white for the 5.83 inch panel class" }
+    kindle: { size: "1072x1448", bg: "#ffffff", ink: "#000000", note: "portrait, big type, single column" }
+    rules: ["one page, no scroll", "every answer carries its age; stale over 26 hours is flagged", "missing data renders a plain empty state"]
+  frontdoor:
+    bg: "#f6f5f1"
+    surface: "#ffffff"
+    text: "#1c1c1a"
+    muted: "#6b6a64"
+    accent: "#5c6650"   # unified to the brand accent in this run; was #534ab7, an off-brand violet inherited from the source build
+    exceptions:
+      - "Font is the system stack, not Inter: the frontdoor CSP is same-origin only, so it cannot load a web font. Recorded, not drift."
+      - "A dark variant exists for the ambient screen at night (prefers-color-scheme), with its own lighter sage, #7d8b6f, so small text keeps AA contrast on the dark ground. Print surfaces and the landing never go dark."
+    rules: ["tabular figures for the clock and agenda times", "cards lift 1px on hover and take the accent border", "the footer line states the read-only rule on the surface itself"]
+  gadget:
+    rules: ["answers are JSON with stable keys", "every answer carries a stale flag", "budget answers are labeled lines, never transactions or payees", "an error names the missing file; it never invents a value"]
+  kindle_loop:
+    rules: ["a failed fetch keeps the last frame", "the loop logs to its own folder on the device", "no text on the device beyond its log; the picture is the interface"]

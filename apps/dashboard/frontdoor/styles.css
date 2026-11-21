@@ -1,10 +1,10 @@
 :root{
   --bg:#f6f5f1; --surface:#ffffff; --text:#1c1c1a; --muted:#6b6a64;
-  --border:rgba(0,0,0,.10); --accent:#534ab7; --radius:14px;
+  --border:rgba(0,0,0,.10); --accent:#5c6650; --radius:14px;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 @media (prefers-color-scheme:dark){
-  :root{ --bg:#16161a; --surface:#202028; --text:#ececf0; --muted:#9a9aa3; --border:rgba(255,255,255,.12); }
+  :root{ --bg:#16161a; --surface:#202028; --text:#ececf0; --muted:#9a9aa3; --border:rgba(255,255,255,.12); --accent:#7d8b6f; }
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -33,8 +33,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:
 /* ---- ambient sleep screen ---- */
 .sleep{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;
   justify-content:center;align-items:center;padding:clamp(16px,4vw,48px);animation:fade .6s ease}
+.sleep[hidden]{display:none}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.sleep{animation:none}}
+@media (prefers-reduced-motion:reduce){.sleep{animation:none}.card{transition:none}}
 .bento{display:grid;gap:14px;width:100%;max-width:920px;
   grid-template-columns:1fr 1fr;grid-template-areas:"clock agenda";}
 @media (max-width:680px){.bento{grid-template-columns:1fr;grid-template-areas:"clock" "agenda"}}

@@ -110,7 +110,7 @@ async function main() {
       transactions:   txClean,
     };
 
-    // 0600: the ledger holds household financials — owner-only, not world-readable.
+    // 0600: the ledger holds household financials: owner-only, not world-readable.
     fs.writeFileSync(OUT_FILE, JSON.stringify(ledger, null, 2), { encoding: "utf8", mode: 0o600 });
     console.log(`Exported ${txClean.length} transactions → ${OUT_FILE}`);
   } finally {

@@ -1,7 +1,7 @@
 # Glance app index for ifthe. Schema: pages -> columns (small|full, max 3) -> widgets.
 # Config path inside the container: /app/config/glance.yml ; default port 8080.
 # NOTE: the monitor widget checks `url` from INSIDE the glance container. home.local may
-# not resolve there — if a service shows down but is up, switch that site's url to its
+# not resolve there; if a service shows down but is up, switch that site's url to its
 # container name (e.g. http://paperless:8000) and keep the click-through on the LAN URL.
 pages:
   - name: Home

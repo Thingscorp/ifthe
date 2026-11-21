@@ -13,7 +13,7 @@ Checks (all runnable here, no Docker):
   3. glance.yml has the expected pages -> columns -> widgets structure.
 
 The published-host-port set is collected from the compose `ports:` blocks, plus
-Actual Budget's :5006 — Actual runs on the host *outside* these compose files
+Actual Budget's :5006: Actual runs on the host *outside* these compose files
 (see deploy/README.md) and its port is taken from the ACTUAL_SERVER_URL default
 in docker-compose.ai.yml so it stays grounded in the real tree.
 
@@ -139,5 +139,5 @@ if findings:
     for x in findings:
         print("  FAIL " + x)
     sys.exit(1)
-print("PASS — dashboard ports resolve, apps.json well-formed, glance structure intact")
+print("PASS: dashboard ports resolve, apps.json well-formed, glance structure intact")
 sys.exit(0)

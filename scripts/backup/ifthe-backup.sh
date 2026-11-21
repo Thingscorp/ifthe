@@ -9,7 +9,7 @@
 #        - Nextcloud (MariaDB)    via  docker exec nextcloud-db mariadb-dump,
 #          with occ maintenance:mode flipped on around the dump
 #
-# Read-only toward your money: this touches NOTHING financial — no bank, no
+# Read-only toward your money: this touches NOTHING financial: no bank, no
 # SimpleFIN, no Actual. Back Actual up with its in-app Settings -> Export.
 #
 # Idempotent and safe to re-run (e.g. from cron/launchd). No-ops cleanly with a
@@ -23,7 +23,7 @@
 #   DATA_ROOT    bind-mount root to snapshot + write dumps under (required)
 #   RESTIC_REPO  restic repository path/URL (required for the restic step)
 # restic also reads its password from RESTIC_PASSWORD / RESTIC_PASSWORD_FILE
-# the same way the restic CLI does — this script does not handle the password.
+# the same way the restic CLI does: this script does not handle the password.
 # ============================================================
 set -euo pipefail
 
@@ -33,17 +33,17 @@ RESTIC_REPO="${RESTIC_REPO:-}"
 skip(){ echo "SKIP: $1"; }
 
 if [ -z "$DATA_ROOT" ]; then
-  echo "DATA_ROOT is not set — nothing to back up. Set DATA_ROOT (and RESTIC_REPO)."
+  echo "DATA_ROOT is not set: nothing to back up. Set DATA_ROOT (and RESTIC_REPO)."
   exit 0
 fi
 
 # --- 1. restic snapshot of the bind-mounted data ------------------------------
 if ! command -v restic >/dev/null 2>&1; then
-  skip "restic not installed — skipping the data snapshot."
+  skip "restic not installed: skipping the data snapshot."
 elif [ -z "$RESTIC_REPO" ]; then
-  skip "RESTIC_REPO not set — skipping the data snapshot."
+  skip "RESTIC_REPO not set: skipping the data snapshot."
 elif [ ! -d "$DATA_ROOT" ]; then
-  skip "DATA_ROOT '$DATA_ROOT' does not exist — skipping the data snapshot."
+  skip "DATA_ROOT '$DATA_ROOT' does not exist: skipping the data snapshot."
 else
   echo "==> restic snapshot of $DATA_ROOT (caches excluded)"
   # Idempotent init: only create the repo if it isn't one already.
@@ -57,7 +57,7 @@ fi
 
 # --- 2. logical database dumps ------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
-  skip "docker not installed — skipping database dumps."
+  skip "docker not installed: skipping database dumps."
   echo "Done."
   exit 0
 fi
@@ -67,17 +67,17 @@ running(){ docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$1"; }
 
 today="$(date +%F)"
 
-# Paperless (Postgres) — logical dump, never a copy of the live files.
+# Paperless (Postgres): logical dump, never a copy of the live files.
 if running paperless-db; then
   echo "==> paperless: pg_dump -> $DATA_ROOT/paperless/export/pg-$today.sql"
   mkdir -p "$DATA_ROOT/paperless/export"
   docker exec paperless-db pg_dump -U paperless paperless \
     > "$DATA_ROOT/paperless/export/pg-$today.sql"
 else
-  skip "paperless-db container not running — skipping Postgres dump."
+  skip "paperless-db container not running: skipping Postgres dump."
 fi
 
-# Nextcloud (MariaDB) — maintenance mode around the dump, per the README.
+# Nextcloud (MariaDB): maintenance mode around the dump, per the README.
 if running nextcloud-db; then
   echo "==> nextcloud: mariadb-dump -> $DATA_ROOT/nextcloud/db-$today.sql"
   mkdir -p "$DATA_ROOT/nextcloud"
@@ -91,7 +91,7 @@ if running nextcloud-db; then
     docker exec nextcloud nextcloud occ maintenance:mode --off || true
   fi
 else
-  skip "nextcloud-db container not running — skipping MariaDB dump."
+  skip "nextcloud-db container not running: skipping MariaDB dump."
 fi
 
 echo "Done."

@@ -9,7 +9,7 @@
 #        - Nextcloud (MariaDB)    via  docker exec -i nextcloud-db mariadb,
 #          with occ maintenance:mode flipped on around the load
 #
-# Read-only toward your money: this touches NOTHING financial — no bank, no
+# Read-only toward your money: this touches NOTHING financial: no bank, no
 # SimpleFIN, no Actual. Restore Actual from its in-app Settings -> Import.
 #
 # Safe to re-run. No-ops cleanly with a clear message and exit 0 if restic,
@@ -28,7 +28,7 @@
 #   RESTORE_TARGET where restic writes the restored tree (default: $DATA_ROOT)
 #   DRY_RUN        1 (default) = show what would happen; 0 = actually restore
 # restic also reads its password from RESTIC_PASSWORD / RESTIC_PASSWORD_FILE
-# the same way the restic CLI does — this script does not handle the password.
+# the same way the restic CLI does: this script does not handle the password.
 # ============================================================
 set -euo pipefail
 
@@ -40,7 +40,7 @@ DRY_RUN="${DRY_RUN:-1}"
 skip(){ echo "SKIP: $1"; }
 
 if [ -z "$DATA_ROOT" ]; then
-  echo "DATA_ROOT is not set — nothing to restore. Set DATA_ROOT (and RESTIC_REPO)."
+  echo "DATA_ROOT is not set: nothing to restore. Set DATA_ROOT (and RESTIC_REPO)."
   exit 0
 fi
 
@@ -54,11 +54,11 @@ newest(){ ls -1t $1 2>/dev/null | head -n 1; }
 
 # --- 1. restic restore of the latest snapshot --------------------------------
 if ! command -v restic >/dev/null 2>&1; then
-  skip "restic not installed — skipping the data restore."
+  skip "restic not installed: skipping the data restore."
 elif [ -z "$RESTIC_REPO" ]; then
-  skip "RESTIC_REPO not set — skipping the data restore."
+  skip "RESTIC_REPO not set: skipping the data restore."
 elif ! restic -r "$RESTIC_REPO" cat config >/dev/null 2>&1; then
-  skip "no restic repository at $RESTIC_REPO — skipping the data restore."
+  skip "no restic repository at $RESTIC_REPO: skipping the data restore."
 else
   echo "==> restic restore latest snapshot -> $RESTORE_TARGET"
   if [ "$DRY_RUN" != "0" ]; then
@@ -70,7 +70,7 @@ fi
 
 # --- 2. logical database loads ------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
-  skip "docker not installed — skipping database loads."
+  skip "docker not installed: skipping database loads."
   echo "Done."
   exit 0
 fi
@@ -78,11 +78,11 @@ fi
 # True only if a container with this exact name is currently running.
 running(){ docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$1"; }
 
-# Paperless (Postgres) — load the newest logical dump back in.
+# Paperless (Postgres): load the newest logical dump back in.
 if running paperless-db; then
   pg_dump_file="$(newest "$DATA_ROOT/paperless/export/pg-*.sql")"
   if [ -z "$pg_dump_file" ]; then
-    skip "no $DATA_ROOT/paperless/export/pg-*.sql dump found — skipping Postgres restore."
+    skip "no $DATA_ROOT/paperless/export/pg-*.sql dump found: skipping Postgres restore."
   else
     echo "==> paperless: psql < $pg_dump_file"
     if [ "$DRY_RUN" != "0" ]; then
@@ -92,14 +92,14 @@ if running paperless-db; then
     fi
   fi
 else
-  skip "paperless-db container not running — skipping Postgres restore."
+  skip "paperless-db container not running: skipping Postgres restore."
 fi
 
-# Nextcloud (MariaDB) — maintenance mode around the load, per the README.
+# Nextcloud (MariaDB): maintenance mode around the load, per the README.
 if running nextcloud-db; then
   db_dump_file="$(newest "$DATA_ROOT/nextcloud/db-*.sql")"
   if [ -z "$db_dump_file" ]; then
-    skip "no $DATA_ROOT/nextcloud/db-*.sql dump found — skipping MariaDB restore."
+    skip "no $DATA_ROOT/nextcloud/db-*.sql dump found: skipping MariaDB restore."
   else
     echo "==> nextcloud: mariadb < $db_dump_file"
     if [ "$DRY_RUN" != "0" ]; then
@@ -117,7 +117,7 @@ if running nextcloud-db; then
     fi
   fi
 else
-  skip "nextcloud-db container not running — skipping MariaDB restore."
+  skip "nextcloud-db container not running: skipping MariaDB restore."
 fi
 
 echo "Done."

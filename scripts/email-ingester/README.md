@@ -18,14 +18,14 @@ Gmail (IMAP, read-only)
   `getmailrc`. Start from [`getmail.conf.docker.example`](getmail.conf.docker.example),
   which is already wired for the container: copy it to `$EMAIL_CONFIG_DIR/getmailrc`
   and fill in your Gmail address + App Password. **The container's getmailrc
-  `[destination] path` must be `/getmail/inbox/`** — that's where both getmail
+  `[destination] path` must be `/getmail/inbox/`**: that's where both getmail
   delivers and the parser reads inside the container. Everything else is wired
   automatically.
 - **Directly (cron):** the steps below.
 
 ---
 
-## Part 1 — getmail6 (fetch from Gmail)
+## Part 1: getmail6 (fetch from Gmail)
 
 ### Install
 
@@ -58,7 +58,7 @@ getmail --getmaildir ~/.getmail
 
 ---
 
-## Part 2 — parse_emails.py (extract + route)
+## Part 2: parse_emails.py (extract + route)
 
 ### Install
 
@@ -75,7 +75,7 @@ brew install tesseract          # macOS
 export DATA_ROOT="/Users/Shared/ifthe"     # macOS; /srv/ifthe on Linux
 export MAILDIR="$DATA_ROOT/getmail/inbox"      # where getmail6 delivers
 export DRY_RUN=""                              # set to "1" to parse without writing
-# These default to DATA_ROOT-derived paths — override only if you must:
+# These default to DATA_ROOT-derived paths; override only if you must:
 #   PARSED_OUT   -> $DATA_ROOT/ai/parsed_emails.json
 #   CONSUME_DIR  -> $DATA_ROOT/paperless/consume   (the dir Paperless watches)
 #   STATE_FILE   -> $DATA_ROOT/ai/.seen_messages
@@ -90,7 +90,7 @@ python3 parse_emails.py
 ### Cron (runs shortly after getmail fetch)
 
 ```
-# cron has no profile env — set DATA_ROOT inline so the defaults resolve
+# cron has no profile env; set DATA_ROOT inline so the defaults resolve
 5,35 * * * * cd /Users/Shared/scripts/email-ingester && DATA_ROOT=/Users/Shared/ifthe MAILDIR=/Users/Shared/ifthe/getmail/inbox python3 parse_emails.py >> /tmp/email-ingester.log 2>&1
 ```
 
@@ -115,7 +115,7 @@ python3 parse_emails.py
 ```
 
 `match_status` and `matched_txn_ids` are updated by Claude's reconciliation
-analysis — the script never writes those fields, Claude does (in the JSON file
+analysis: the script never writes those fields, Claude does (in the JSON file
 only, never in Actual).
 
 ---
@@ -125,4 +125,4 @@ only, never in Actual).
 - Never modifies or deletes Gmail messages (getmail6 runs with `delete=false`)
 - Never writes to Actual Budget
 - Never initiates payments
-- PDF attachments are **copied** into Paperless consume — originals stay in Maildir
+- PDF attachments are **copied** into Paperless consume; originals stay in Maildir

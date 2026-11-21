@@ -4,7 +4,7 @@
 Asserts:
   1. The dashboard Caddyfile sets X-Content-Type-Options, X-Frame-Options, Referrer-Policy.
   2. index.html ships a Content-Security-Policy meta with default-src 'self'.
-  3. app.js performs no state-changing fetches (no POST/PUT/DELETE) — read-only only.
+  3. app.js performs no state-changing fetches (no POST/PUT/DELETE): read-only only.
 """
 import re, sys
 from pathlib import Path

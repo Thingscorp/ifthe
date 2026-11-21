@@ -24,13 +24,14 @@ CSS = """
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #f7f4ec; color: #1c1a17; font-family: "Avenir Next",
   "Segoe UI", system-ui, sans-serif; width: 800px; height: 480px;
+  overflow: hidden; font-variant-numeric: tabular-nums;
   padding: 28px 34px; display: flex; flex-direction: column; }
 header { display: flex; align-items: baseline; gap: 18px;
   border-bottom: 2px solid #1c1a17; padding-bottom: 10px; }
 .clock { font-size: 64px; font-weight: 600; letter-spacing: -1px; }
 .day { font-size: 26px; }
 main { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px 36px;
-  padding-top: 14px; flex: 1; }
+  padding-top: 14px; flex: 1; min-height: 0; overflow: hidden; }
 h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 2px;
   color: #5c6650; margin-bottom: 7px; }
 section { margin-bottom: 12px; }
@@ -51,17 +52,17 @@ footer { border-top: 1px solid #c9c3b4; padding-top: 8px; font-size: 13px;
 KINDLE_CSS = """
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #ffffff; color: #000000; font-family: Georgia, serif;
-  width: 1072px; height: 1448px; overflow: hidden; padding: 56px 60px; display: flex;
+  width: 1072px; height: 1448px; overflow: hidden; font-variant-numeric: tabular-nums; padding: 56px 60px; display: flex;
   flex-direction: column; }
 header { border-bottom: 4px solid #000; padding-bottom: 22px; }
 .clock { font-size: 150px; font-weight: 700; letter-spacing: -2px;
   font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif; }
 .day { font-size: 44px; margin-top: 6px; }
-main { padding-top: 30px; flex: 1; }
+main { padding-top: 22px; flex: 1; min-height: 0; overflow: hidden; }
 h2 { font-size: 24px; text-transform: uppercase; letter-spacing: 4px;
   margin-bottom: 14px; font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif; }
-section { margin-bottom: 40px; }
-ul { list-style: none; font-size: 38px; line-height: 1.5; }
+section { margin-bottom: 28px; }
+ul { list-style: none; font-size: 38px; line-height: 1.45; }
 ul .t { display: inline-block; min-width: 190px; padding-right: 22px; }
 ul.money .t { min-width: 300px; }
 .muted { color: #555; }
@@ -74,13 +75,13 @@ CARD_CSS = """
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #ffffff; color: #000000; font-family: "Avenir Next",
   "Segoe UI", system-ui, sans-serif; width: 648px; height: 480px;
-  overflow: hidden; padding: 22px 26px; display: flex; flex-direction: column; }
+  overflow: hidden; font-variant-numeric: tabular-nums; padding: 22px 26px; display: flex; flex-direction: column; }
 header { display: flex; align-items: baseline; gap: 14px;
   border-bottom: 2px solid #000; padding-bottom: 8px; }
 .clock { font-size: 50px; font-weight: 600; letter-spacing: -1px; }
 .day { font-size: 21px; }
 main { display: grid; grid-template-columns: 1.35fr 1fr; gap: 6px 28px;
-  padding-top: 12px; flex: 1; }
+  padding-top: 12px; flex: 1; min-height: 0; overflow: hidden; }
 h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
   color: #444; margin-bottom: 6px; }
 section { margin-bottom: 10px; }

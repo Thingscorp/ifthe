@@ -74,7 +74,7 @@ def main():
     pw = os.environ.get("CALDAV_APP_PASSWORD", "")
     today = datetime.now().date()
     if not (url and user and pw):
-        print("CalDAV not configured — writing empty agenda (no-op).")
+        print("CalDAV not configured: writing empty agenda (no-op).")
         write([], today)
         return
     import caldav  # lazy: only needed when actually fetching
