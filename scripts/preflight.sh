@@ -32,6 +32,15 @@ if [ "$(uname -s)" != "Darwin" ]; then
   esac
 fi
 
+# AdGuard binds host port 53. On a stock Linux install the systemd-resolved stub
+# listener already holds 127.0.0.53:53, and the deploy otherwise dies inside
+# docker compose with a bind error. Name the fix here instead.
+if [ "$(uname -s)" != "Darwin" ] && command -v ss >/dev/null 2>&1; then
+  if ss -tuln 2>/dev/null | grep -q "127.0.0.53:53"; then
+    fail "Port 53 is already held by the systemd-resolved stub listener (127.0.0.53), and AdGuard needs port 53. Free it: set DNSStubListener=no in /etc/systemd/resolved.conf, run 'sudo systemctl restart systemd-resolved', and point /etc/resolv.conf at your upstream DNS. Then retry."
+  fi
+fi
+
 # Colima (your home server's runtime) mounts $HOME by default but NOT /Users/Shared. If DATA_ROOT is
 # outside $HOME, bind mounts will be EMPTY inside containers unless you've added a Colima
 # mount for it. Warn (don't fail: you may have added the mount via `colima start --edit`).

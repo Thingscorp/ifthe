@@ -27,6 +27,10 @@ expect 0 "all secrets set + good DATA_ROOT -> ok" -- env DATA_ROOT=/srv/ifthe "$
 expect 1 "DATA_ROOT on /Volumes (network mount) -> fail" -- env DATA_ROOT=/Volumes/usb "${SECRETS[@]}" bash scripts/preflight.sh
 if [ "$(uname -s)" != "Darwin" ]; then
   expect 1 "macOS DATA_ROOT on a non-Mac host -> fail" -- env DATA_ROOT=/Users/Shared/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
+  mkdir -p "$TMP/fakebin"
+  printf '#!/bin/sh\necho "tcp  LISTEN 0 4096 127.0.0.53:53 0.0.0.0:*"\n' > "$TMP/fakebin/ss"
+  chmod +x "$TMP/fakebin/ss"
+  expect 1 "systemd-resolved stub on port 53 -> fail" -- env PATH="$TMP/fakebin:$PATH" DATA_ROOT=/srv/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
 fi
 expect 1 "empty required secret -> fail" -- env DATA_ROOT=/srv/ifthe VW_ADMIN_TOKEN= PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x bash scripts/preflight.sh
 
