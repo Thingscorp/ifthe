@@ -24,9 +24,10 @@ a:hover { color: #48523e; text-decoration-color: #48523e80; }
 a:focus-visible, .product-card:focus-visible { outline: 2px solid #5c6650; outline-offset: 3px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .page-container { background: #fff; flex-direction: column; max-width: 1100px; min-height: 100vh; margin: 0 auto; display: flex; }
-.header { justify-content: center; align-items: center; padding: 50px 40px; display: flex; position: relative; }
+.header { justify-content: center; align-items: center; padding: 50px 40px; display: flex; flex-direction: column; position: relative; }
 .header:after { content: ""; background-color: #eee; height: 1px; position: absolute; bottom: 0; left: 60px; right: 60px; }
 .wordmark { font-size: 46px; font-weight: 800; letter-spacing: -2px; color: #1c1a17; line-height: 1; }
+.tagline { font-size: 17px; color: #5c6650; margin-top: 12px; text-align: center; }
 .wordmark .i { position: relative; }
 .wordmark .i:after { content: ""; position: absolute; left: 50%; top: .02em; transform: translateX(-50%); width: .17em; height: .17em; border-radius: 50%; background: #5c6650; }
 .product-lineup { justify-content: space-between; gap: 10px; padding: 40px 60px; display: flex; position: relative; }
@@ -92,6 +93,7 @@ a:focus-visible, .product-card:focus-visible { outline: 2px solid #5c6650; outli
 
   <div class="header">
     <div class="wordmark"><span class="i">&#305;</span>fthe</div>
+    <div class="tagline">Modular awesomeness that doesn't cook your brain</div>
   </div>
 
   <div class="product-lineup">
