@@ -1,0 +1,511 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-21T06:10:43Z",
+  "title": "Design System: ifthe",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Sage",
+        "canonical": "#5c6650",
+        "tonalRamp": [
+          "#141612",
+          "#272b22",
+          "#3b4133",
+          "#5c6650",
+          "#838b7a",
+          "#aaafa4",
+          "#ced1ca",
+          "#ebedea"
+        ]
+      },
+      "primary-deep": {
+        "role": "primary",
+        "displayName": "Deep Sage",
+        "canonical": "#48523e",
+        "tonalRamp": [
+          "#10120e",
+          "#1e221a",
+          "#2e3428",
+          "#48523e",
+          "#747c6c",
+          "#a0a59b",
+          "#c8cbc5",
+          "#e9eae8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1c1a17",
+        "tonalRamp": [
+          "#060605",
+          "#0c0b0a",
+          "#12110f",
+          "#1c1a17",
+          "#52514f",
+          "#898886",
+          "#bbbab9",
+          "#e4e4e3"
+        ]
+      },
+      "ink-frontdoor": {
+        "role": "neutral",
+        "displayName": "Front Door Ink",
+        "canonical": "#1c1c1a",
+        "tonalRamp": [
+          "#060606",
+          "#0c0c0b",
+          "#121211",
+          "#1c1c1a",
+          "#525251",
+          "#898988",
+          "#bbbbba",
+          "#e4e4e4"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#f7f4ec",
+        "tonalRamp": [
+          "#363634",
+          "#686663",
+          "#9e9c97",
+          "#f7f4ec",
+          "#f9f7f1",
+          "#fbf9f5",
+          "#fdfcf9",
+          "#fefefd"
+        ]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#383838",
+          "#6b6b6b",
+          "#a3a3a3",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff"
+        ]
+      },
+      "frontdoor-bg": {
+        "role": "neutral",
+        "displayName": "Front Door Ground",
+        "canonical": "#f6f5f1",
+        "tonalRamp": [
+          "#363635",
+          "#676765",
+          "#9d9d9a",
+          "#f6f5f1",
+          "#f8f7f4",
+          "#fafaf8",
+          "#fcfcfb",
+          "#fefefd"
+        ]
+      },
+      "body": {
+        "role": "neutral",
+        "displayName": "Body Gray",
+        "canonical": "#333333",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#151515",
+          "#212121",
+          "#333333",
+          "#646464",
+          "#959595",
+          "#c2c2c2",
+          "#e7e7e7"
+        ]
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Gray",
+        "canonical": "#555555",
+        "tonalRamp": [
+          "#131313",
+          "#242424",
+          "#363636",
+          "#555555",
+          "#7e7e7e",
+          "#a7a7a7",
+          "#cccccc",
+          "#ebebeb"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Gray",
+        "canonical": "#666666",
+        "tonalRamp": [
+          "#161616",
+          "#2b2b2b",
+          "#414141",
+          "#666666",
+          "#8b8b8b",
+          "#afafaf",
+          "#d1d1d1",
+          "#ededed"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Faint Gray",
+        "canonical": "#737373",
+        "tonalRamp": [
+          "#191919",
+          "#303030",
+          "#4a4a4a",
+          "#737373",
+          "#959595",
+          "#b6b6b6",
+          "#d5d5d5",
+          "#eeeeee"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#eeeeee",
+        "tonalRamp": [
+          "#343434",
+          "#646464",
+          "#989898",
+          "#eeeeee",
+          "#f2f2f2",
+          "#f6f6f6",
+          "#fafafa",
+          "#fdfdfd"
+        ]
+      },
+      "briefing-label": {
+        "role": "neutral",
+        "displayName": "Briefing Label",
+        "canonical": "#44403a",
+        "tonalRamp": [
+          "#0f0e0d",
+          "#1d1b18",
+          "#2c2925",
+          "#44403a",
+          "#716e69",
+          "#9e9c99",
+          "#c7c6c4",
+          "#e9e8e7"
+        ]
+      },
+      "briefing-muted": {
+        "role": "neutral",
+        "displayName": "Briefing Muted",
+        "canonical": "#8a8578",
+        "tonalRamp": [
+          "#1e1d1a",
+          "#3a3832",
+          "#58554d",
+          "#8a8578",
+          "#a6a298",
+          "#c2c0b9",
+          "#dcdad6",
+          "#f1f0ef"
+        ]
+      },
+      "briefing-rule": {
+        "role": "neutral",
+        "displayName": "Briefing Rule",
+        "canonical": "#c9c3b4",
+        "tonalRamp": [
+          "#2c2b28",
+          "#54524c",
+          "#817d73",
+          "#c9c3b4",
+          "#d6d1c6",
+          "#e3e0d8",
+          "#efede8",
+          "#f9f8f6"
+        ]
+      },
+      "pure-black": {
+        "role": "neutral",
+        "displayName": "Pure Black",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#3d3d3d",
+          "#7a7a7a",
+          "#b2b2b2",
+          "#e0e0e0"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Status Green",
+        "canonical": "#44543c",
+        "tonalRamp": [
+          "#0f120d",
+          "#1d2319",
+          "#2c3626",
+          "#44543c",
+          "#717d6b",
+          "#9ea69a",
+          "#c7ccc4",
+          "#e9eae8"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Status Amber",
+        "canonical": "#8a5a13",
+        "tonalRamp": [
+          "#1e1404",
+          "#3a2608",
+          "#583a0c",
+          "#8a5a13",
+          "#a6824c",
+          "#c2a984",
+          "#dcceb8",
+          "#f1ebe3"
+        ]
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#16161a",
+        "tonalRamp": [
+          "#050506",
+          "#09090b",
+          "#0e0e11",
+          "#16161a",
+          "#4e4e51",
+          "#868688",
+          "#b9b9ba",
+          "#e3e3e4"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "#202028",
+        "tonalRamp": [
+          "#070709",
+          "#0d0d11",
+          "#14141a",
+          "#202028",
+          "#56565c",
+          "#8b8b8f",
+          "#bcbcbe",
+          "#e4e4e5"
+        ]
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Night Text",
+        "canonical": "#ececf0",
+        "tonalRamp": [
+          "#343435",
+          "#636365",
+          "#97979a",
+          "#ececf0",
+          "#f1f1f4",
+          "#f5f5f7",
+          "#f9f9fa",
+          "#fdfdfd"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Night Muted",
+        "canonical": "#9a9aa3",
+        "tonalRamp": [
+          "#222224",
+          "#414144",
+          "#636368",
+          "#9a9aa3",
+          "#b2b2b9",
+          "#cacacf",
+          "#e1e1e3",
+          "#f3f3f4"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Night Sage",
+        "canonical": "#7d8b6f",
+        "tonalRamp": [
+          "#1c1f18",
+          "#343a2f",
+          "#505947",
+          "#7d8b6f",
+          "#9ca792",
+          "#bbc3b4",
+          "#d8dcd4",
+          "#eff1ee"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The landing wordmark only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Front door bar title and ambient clock."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Landing product names and resource titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Landing intro text; briefing lists scale per profile."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Briefing section labels, uppercase with wide tracking."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "card-hover",
+        "value": "transform .2s, opacity .2s",
+        "purpose": "Landing product card hover scale; off under prefers-reduced-motion."
+      },
+      {
+        "name": "app-card-hover",
+        "value": "transform .08s ease, border-color .12s ease",
+        "purpose": "Front door app card 1px lift and accent border."
+      },
+      {
+        "name": "link-fade",
+        "value": "color .2s, text-decoration-color .2s",
+        "purpose": "Link hover deepening to Deep Sage."
+      },
+      {
+        "name": "ambient-fade",
+        "value": "opacity .6s ease",
+        "purpose": "Front door ambient screen fade-in; off under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "frontdoor-bento",
+        "value": "680px"
+      },
+      {
+        "name": "landing-grid-3",
+        "value": "900px"
+      },
+      {
+        "name": "landing-grid-2",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Wordmark",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "The product signature: lowercase ifthe, ink, with a sage dot over a dotless i.",
+      "html": "<div class=\"ds-wordmark\">ifth<span class=\"ds-wm-i\">i</span>e</div>",
+      "css": ".ds-wordmark { font-family: Inter, sans-serif; font-size: 46px; font-weight: 800; letter-spacing: -2px; color: #1c1a17; line-height: 1; } .ds-wm-i { position: relative; color: transparent; } .ds-wm-i::before { content: \"i\"; position: absolute; left: 0; top: 0; color: #1c1a17; clip-path: inset(28% 0 0 0); } .ds-wm-i::after { content: \"\"; position: absolute; left: 50%; top: .02em; transform: translateX(-50%); width: .17em; height: .17em; border-radius: 50%; background: #5c6650; }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "title",
+      "description": "Landing lineup card: image, name with soft accent underline, one-line description. Scales on hover; a coming-soon variant sits faded.",
+      "html": "<a class=\"ds-product-card\" href=\"#\"><div class=\"ds-product-img\"></div><h3>ifthe Home</h3><p>The code is public.</p></a>",
+      "css": ".ds-product-card { display: block; text-align: center; padding: 10px; text-decoration: none; font-family: Inter, sans-serif; transition: transform .2s, opacity .2s; } .ds-product-card:hover { transform: scale(1.03); } .ds-product-card:focus-visible { outline: 2px solid #5c6650; outline-offset: 3px; } .ds-product-img { width: 120px; height: 120px; margin: 0 auto 15px; outline: 1px solid rgba(0,0,0,.1); outline-offset: -1px; background: #f7f4ec; } .ds-product-card h3 { font-size: .95rem; font-weight: 600; color: #333; margin: 0 0 5px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; text-underline-offset: 2px; } .ds-product-card p { color: #666; font-size: .85rem; line-height: 1.4; margin: 0; }"
+    },
+    {
+      "name": "App Card",
+      "kind": "card",
+      "refersTo": "app-card",
+      "description": "Front door launcher card: icon tile, app name, one-line description. Lifts 1px and takes the sage border on hover.",
+      "html": "<a class=\"ds-app-card\" href=\"#\"><span class=\"ds-app-ico\">A</span><span class=\"ds-app-txt\"><span class=\"ds-app-t\">Actual Budget</span><span class=\"ds-app-d\">Household ledger</span></span></a>",
+      "css": ".ds-app-card { display: flex; align-items: center; gap: 12px; padding: 14px; background: #ffffff; border: 1px solid rgba(0,0,0,.10); border-radius: 14px; text-decoration: none; color: #1c1c1a; font-family: -apple-system, \"Segoe UI\", Roboto, sans-serif; transition: transform .08s ease, border-color .12s ease; } .ds-app-card:hover { transform: translateY(-1px); border-color: #5c6650; } .ds-app-card:focus-visible { outline: 2px solid #5c6650; outline-offset: 2px; } .ds-app-ico { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 11px; background: #5c6650; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 19px; } .ds-app-txt { display: flex; flex-direction: column; min-width: 0; } .ds-app-t { font-weight: 500; } .ds-app-d { font-size: 12px; color: #6b6a64; }"
+    },
+    {
+      "name": "Ambient Tile",
+      "kind": "custom",
+      "refersTo": "headline",
+      "description": "Front door idle-screen tile: the clock at display size, date and greeting beneath, on a bordered surface tile.",
+      "html": "<section class=\"ds-tile\"><div class=\"ds-tile-time\">7:04</div><div class=\"ds-tile-date\">Friday, November 21</div><div class=\"ds-tile-greet\">Good morning</div></section>",
+      "css": ".ds-tile { background: #ffffff; border: 1px solid rgba(0,0,0,.10); border-radius: 18px; padding: 30px; font-family: -apple-system, \"Segoe UI\", Roboto, sans-serif; color: #1c1c1a; } .ds-tile-time { font-size: 92px; font-weight: 600; line-height: .95; letter-spacing: -.02em; font-variant-numeric: tabular-nums; } .ds-tile-date { font-size: 20px; color: #6b6a64; margin-top: 10px; } .ds-tile-greet { font-size: 14px; color: #6b6a64; margin-top: 18px; }"
+    },
+    {
+      "name": "Briefing Section",
+      "kind": "custom",
+      "refersTo": "section-label",
+      "description": "The briefing component: an uppercase sage label, then rows with a fixed-width label column so values align.",
+      "html": "<section class=\"ds-brief\"><h2>Today</h2><ul><li><span class=\"ds-brief-t\">9:05 AM</span>School run</li><li><span class=\"ds-brief-t\">12:30 PM</span>Dentist</li></ul></section>",
+      "css": ".ds-brief { font-family: \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif; color: #1c1a17; background: #f7f4ec; padding: 10px 14px; font-variant-numeric: tabular-nums; } .ds-brief h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: #5c6650; margin: 0 0 7px; font-weight: 400; } .ds-brief ul { list-style: none; margin: 0; padding: 0; font-size: 19px; line-height: 1.45; } .ds-brief-t { display: inline-block; min-width: 102px; padding-right: 12px; color: #44403a; }"
+    },
+    {
+      "name": "Link",
+      "kind": "nav",
+      "refersTo": "link",
+      "description": "Sage text with a soft accent underline; both deepen on hover; focus draws the sage outline.",
+      "html": "<a class=\"ds-link\" href=\"#\">Build your own</a>",
+      "css": ".ds-link { color: #5c6650; font-family: Inter, sans-serif; text-decoration: underline #5c665040; text-decoration-thickness: 1px; text-underline-offset: 2px; transition: color .2s, text-decoration-color .2s; } .ds-link:hover { color: #48523e; text-decoration-color: #48523e80; } .ds-link:focus-visible { outline: 2px solid #5c6650; outline-offset: 3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Spec Sheet",
+    "overview": "Every surface in ifthe reads like a good spec sheet: named parts, exact values, honest status, nothing decorative that is not information. The system is ink on paper with one sage accent, set in plain type, divided by hairlines instead of boxes. It covers five surfaces that share one discipline: a landing page, a LAN front door with an ambient idle screen, and a morning briefing rendered at three fixed sizes for e-ink and print-like displays.\n\nDensity is low and type does the talking. The biggest thing on any screen is the clock or the wordmark; everything else is a labeled list. Color is rationed: the accent marks links, section labels, and focus, and nothing else. Surfaces that print or sit on e-ink drop to pure black on white.",
+    "keyCharacteristics": [
+      "Ink on paper: warm neutrals, one sage accent, no second accent anywhere.",
+      "Hairlines divide; boxes and shadows do not appear.",
+      "Fixed formats: briefing pages are exact pixel sizes and never scroll.",
+      "Tabular figures wherever a number can change: clocks, agenda times, money.",
+      "Honest status in the design itself: coming-soon work is shown faded, not hidden."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Sage is the only brand accent on every surface. The front door's per-app icon colors are app identity, set per app in its config; they are not brand accents and never spread into chrome, text, or new components.",
+        "section": "colors"
+      },
+      {
+        "name": "The Print Rule",
+        "body": "Profiles that print or sit on e-ink (card, Kindle) use pure black on white. Their only grays are the muted text steps already in the renderer. No sage, no paper tint, no color of any kind.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every surface that shows a changing number sets font-variant-numeric: tabular-nums: all three briefing profiles, the front door clock, and its agenda times. Digits never shift a column.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest and stay flat. A hover translation or scale is the strongest depth cue this system uses.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Sage (#5c6650) as the only accent, and Deep Sage (#48523e) only for its hover state.",
+      "Do divide sections with 1px hairlines inset from the column, never with boxes or shadows.",
+      "Do set tabular figures on any number that can change.",
+      "Do show unbuilt work faded with its status stated, the coming-soon treatment.",
+      "Do keep briefing pages at their exact profile sizes, with the footer inside the frame at maximum data."
+    ],
+    "donts": [
+      "Don't add a box-shadow to anything. The system has none.",
+      "Don't introduce a second accent color, including in new per-app icon colors chosen to match the chrome.",
+      "Don't put color on the card or Kindle profiles beyond their muted grays.",
+      "Don't round corners on the landing or the briefing; rounding belongs to the front door alone.",
+      "Don't load a web font in the front door; its same-origin CSP forbids it, and the system stack is the recorded design.",
+      "Don't let a briefing page scroll or push its footer out of frame; clip inside the main region instead."
+    ]
+  }
+}
