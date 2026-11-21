@@ -22,7 +22,7 @@ rm -f scripts/actual-export/__qa_tmp.js
 expect 0 "guard passes again after the injected file is removed" -- bash scripts/guard-readonly.sh
 
 echo "== preflight.sh =="
-SECRETS=(VW_ADMIN_TOKEN=x PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x)
+SECRETS=(VW_ADMIN_TOKEN=x PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x HOMEBOX_API_KEY_PEPPER=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
 expect 0 "all secrets set + good DATA_ROOT -> ok" -- env DATA_ROOT=/srv/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
 expect 1 "DATA_ROOT on /Volumes (network mount) -> fail" -- env DATA_ROOT=/Volumes/usb "${SECRETS[@]}" bash scripts/preflight.sh
 if [ "$(uname -s)" != "Darwin" ]; then
@@ -32,7 +32,8 @@ if [ "$(uname -s)" != "Darwin" ]; then
   chmod +x "$TMP/fakebin/ss"
   expect 1 "systemd-resolved stub on port 53 -> fail" -- env PATH="$TMP/fakebin:$PATH" DATA_ROOT=/srv/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
 fi
-expect 1 "empty required secret -> fail" -- env DATA_ROOT=/srv/ifthe VW_ADMIN_TOKEN= PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x bash scripts/preflight.sh
+expect 1 "empty required secret -> fail" -- env DATA_ROOT=/srv/ifthe VW_ADMIN_TOKEN= PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x HOMEBOX_API_KEY_PEPPER=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx bash scripts/preflight.sh
+expect 1 "short HOMEBOX_API_KEY_PEPPER -> fail" -- env DATA_ROOT=/srv/ifthe "${SECRETS[@]}" HOMEBOX_API_KEY_PEPPER=short bash scripts/preflight.sh
 
 echo "== 00-create-dirs.sh =="
 expect 1 "refuses a /Volumes DATA_ROOT" -- env DATA_ROOT=/Volumes/usb/ifthe bash "apps/deploy/00-create-dirs.sh"

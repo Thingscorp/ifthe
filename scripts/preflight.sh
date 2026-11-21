@@ -60,12 +60,19 @@ required_secrets=(
   NEXTCLOUD_DB_ROOT_PASS
   NEXTCLOUD_DB_PASS
   NEXTCLOUD_ADMIN_PASSWORD
+  HOMEBOX_API_KEY_PEPPER
 )
 for var in "${required_secrets[@]}"; do
   if [ -z "${!var:-}" ]; then
     fail "$var is empty. Set it in .env (generate with: openssl rand -base64 48)."
   fi
 done
+
+# Homebox refuses to start with a pepper under 32 bytes: it panics at boot and
+# crash-loops, which reads as a broken deploy. Catch the short value here.
+if [ "${#HOMEBOX_API_KEY_PEPPER}" -lt 32 ]; then
+  fail "HOMEBOX_API_KEY_PEPPER is under 32 bytes, and Homebox will not start. Generate one with: openssl rand -base64 48."
+fi
 
 # Docker Compose is needed to bring stacks up, but only warn here so this
 # script can be sanity-run on a box without Docker installed yet.
