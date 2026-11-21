@@ -53,6 +53,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+      start_period: 60s
 
   nextcloud-redis:
     image: docker.io/library/redis:7-alpine
@@ -67,6 +68,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 60s
 
   nextcloud:
     image: nextcloud:34-apache  # migration-gated: bump one major at a time
