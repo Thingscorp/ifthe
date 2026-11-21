@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ifthe: a home server with a morning briefing</title>
+<meta name="description" content="ifthe is a home server with a morning briefing: self-hosted household services, one screen with the day, and a read-only AI layer that can never move your money.">
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background-color: #fff; width: 100%; }
+body { color: #333; letter-spacing: -.3px; font-family: Inter, sans-serif; font-weight: 400; }
+a { color: #5c6650; text-underline-offset: 2px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; transition: color .2s, text-decoration-color .2s; }
+a:hover { color: #48523e; text-decoration-color: #48523e80; }
+.page-container { background: #fff; flex-direction: column; max-width: 1100px; min-height: 100vh; margin: 0 auto; display: flex; }
+.header { justify-content: center; align-items: center; padding: 50px 40px; display: flex; position: relative; }
+.header:after { content: ""; background-color: #eee; height: 1px; position: absolute; bottom: 0; left: 60px; right: 60px; }
+.wordmark { font-size: 46px; font-weight: 800; letter-spacing: -2px; color: #171717; line-height: 1; }
+.wordmark .i { position: relative; }
+.wordmark .i:after { content: ""; position: absolute; left: 50%; top: .02em; transform: translateX(-50%); width: .17em; height: .17em; border-radius: 50%; background: #5c6650; }
+.product-lineup { justify-content: space-between; gap: 10px; padding: 40px 60px; display: flex; position: relative; }
+.product-lineup:after { content: ""; background-color: #eee; height: 1px; position: absolute; bottom: 0; left: 60px; right: 60px; }
+.product-card { text-align: center; flex: 1; padding: 10px; text-decoration: none; transition: transform .2s, opacity .2s; }
+.product-card:hover { text-decoration: none; transform: scale(1.03); }
+.product-card.coming-soon:hover { transform: none; }
+.product-card h3 { text-underline-offset: 2px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; color: #333; margin-bottom: 5px; font-size: .95rem; font-weight: 600; }
+.product-card:hover h3 { text-decoration-color: #48523e80; }
+.product-card.coming-soon h3 { text-decoration: none; }
+.product-card img { object-fit: contain; width: auto; height: 120px; margin: 0 auto 15px; display: block; }
+.product-card p { color: #666; margin: 0; font-size: .85rem; line-height: 1.4; }
+.product-card.coming-soon { opacity: .6; }
+.intro { padding: 40px 60px; position: relative; }
+.intro:after { content: ""; background-color: #eee; height: 1px; position: absolute; bottom: 0; left: 60px; right: 60px; }
+.intro h1 { color: #171717; font-size: 1.6rem; font-weight: 700; letter-spacing: -.5px; margin-bottom: 20px; }
+.intro p { color: #555; max-width: 700px; margin: 0 0 1em; font-size: 1rem; line-height: 1.7; }
+.intro p:last-child { margin-bottom: 0; }
+.intro strong { color: #333; }
+.resources { gap: 40px; padding: 40px 60px; display: flex; position: relative; }
+.resources:after { content: ""; background-color: #eee; height: 1px; position: absolute; bottom: 0; left: 60px; right: 60px; }
+.resources-col { flex: 1; }
+.resources-col a { margin-bottom: 20px; text-decoration: none; display: block; }
+.resource-title { color: #5c6650; text-underline-offset: 2px; margin-bottom: 3px; font-size: .95rem; font-weight: 600; text-decoration: underline #5c665040; text-decoration-thickness: 1px; display: block; }
+.resource-desc { color: #555; font-size: .85rem; line-height: 1.4; text-decoration: none; display: block; }
+.resources-col a:hover .resource-title { color: #48523e; text-decoration-color: #48523e80; }
+.resources-col ul { color: #555; margin: 0; padding-left: 18px; list-style: outside; }
+.resources-col li { color: #555; margin-bottom: 2px; padding: 0; font-size: .85rem; line-height: 1.4; }
+.resources-col li a { color: #555; text-decoration: underline #55555540; display: inline; margin: 0; }
+.resources-col li a:hover { color: #5c6650; }
+.footer { flex-direction: column; align-items: flex-start; gap: 8px; margin-top: auto; padding: 20px 60px; display: flex; }
+.footer-links { font-size: .85rem; }
+.footer-links a { color: #333; text-decoration: none; }
+.footer-links a:hover { color: #5c6650; text-decoration: none; }
+.footer-copyright { color: #999; font-size: .85rem; }
+@media (max-width: 900px) {
+  .product-lineup { grid-template-columns: repeat(3, 1fr); display: grid; }
+  .product-card { flex: none; margin-bottom: 20px; }
+  .resources { flex-direction: column; gap: 0; }
+}
+@media (max-width: 600px) {
+  .header { padding: 35px 20px; }
+  .header:after { left: 20px; right: 20px; }
+  .wordmark { font-size: 36px; }
+  .product-lineup { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 30px 20px; display: grid; }
+  .product-lineup:after { left: 20px; right: 20px; }
+  .product-card { flex-direction: column; flex: none; padding: 5px; display: flex; }
+  .product-card img { height: 80px; margin-bottom: 15px; }
+  .intro { padding: 30px 20px; }
+  .intro:after { left: 20px; right: 20px; }
+  .intro p { font-size: .9rem; }
+  .resources { padding: 30px 20px; }
+  .resources:after { left: 20px; right: 20px; }
+  .footer { padding: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="page-container">
+
+  <div class="header">
+    <div class="wordmark"><span class="i">&#305;</span>fthe</div>
+  </div>
+
+  <div class="product-lineup">
+    <a class="product-card coming-soon" href="https://github.com/Thingscorp/ifthe">
+      <img src="img/panel.png" alt="The ifthe panel showing the morning briefing">
+      <h3>ifthe Panel</h3>
+      <p>A 4x6 e-paper panel for the counter. Buttons, no touch, weeks between charges. In the works.</p>
+    </a>
+    <a class="product-card" href="https://github.com/Thingscorp/ifthe">
+      <img src="img/home.png" alt="The ifthe morning briefing at 800 by 480">
+      <h3>ifthe Home</h3>
+      <p>The server: budget, files, documents and backups on one small box, with the briefing built in. The code is public.</p>
+    </a>
+    <a class="product-card" href="https://github.com/Thingscorp/ifthe/blob/main/kindle/README.md">
+      <img src="img/kindle.png" alt="The ifthe morning briefing on a Kindle">
+      <h3>ifthe for Kindle</h3>
+      <p>The same briefing on an old Kindle. The server renders a picture, the Kindle draws it. Built, and in the repo.</p>
+    </a>
+  </div>
+
+  <div class="intro">
+    <h1>Your house, on one screen.</h1>
+    <p>ifthe is a home server with a morning briefing. It runs the household services (budget, files, photos, documents, backups) on one small box on your own network, and every morning it puts one page together: <strong>today's calendar</strong>, <strong>whether the backup ran</strong>, <strong>the state of the house</strong>, and <strong>the list that matters this week</strong>. The page goes to an e-paper panel, so it is just there when you walk into the kitchen.</p>
+    <p>Why? Because the day's facts are scattered across six apps, and none of them shows the whole picture. ifthe follows the rules the original Pebble got right: an <strong>always-on e-paper screen</strong>, <strong>one page with the whole day</strong>, <strong>buttons instead of touch</strong>, and <strong>nothing that asks for your attention back</strong>.</p>
+    <p><strong>Our goal is simple</strong>: one screen with the day on it, built from parts anyone can buy, with the code public so you can run your own. Your data stays on your network. The AI layer reads the exports and answers questions out loud when you ask, and it is built so it can never move your money.</p>
+  </div>
+
+  <div class="resources">
+    <div class="resources-col">
+      <a href="https://github.com/Thingscorp/ifthe">
+        <span class="resource-title">Build your own</span>
+        <span class="resource-desc">The full template on GitHub: services, exporters, tests, and the check gate</span>
+      </a>
+      <a href="https://github.com/Thingscorp/ifthe/blob/main/briefing/README.md">
+        <span class="resource-title">The briefing renderer</span>
+        <span class="resource-desc">One page from plain JSON files, sized for panels and Kindles</span>
+      </a>
+      <a href="https://github.com/Thingscorp/ifthe/blob/main/gadget/README.md">
+        <span class="resource-title">Muse Gadget commands</span>
+        <span class="resource-desc">Five read-only commands so Muse can answer questions about your house</span>
+      </a>
+    </div>
+    <div class="resources-col">
+      <a href="https://github.com/Thingscorp/ifthe/blob/main/kindle/README.md">
+        <span class="resource-title">The Kindle package</span>
+        <span class="resource-desc">Server renders a PNG, a small loop on a jailbroken Kindle draws it</span>
+      </a>
+      <span class="resource-title" style="text-decoration: none;">Built on</span>
+      <ul>
+        <li><a href="https://gadgets.muse.ai/">Muse Gadgets</a>, Meta's open source hardware program</li>
+        <li><a href="https://github.com/facebookincubator/muse-gadget-sdk">The Muse Gadget SDK</a> on GitHub</li>
+        <li><a href="https://kindlemodding.org/">The Kindle Modding Wiki</a>, for the flash path</li>
+        <li><a href="https://repebble.com/">Pebble</a>, back after 9 years, for the rules above</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-links"><a href="https://github.com/Thingscorp/ifthe">GitHub</a> &nbsp;·&nbsp; <a href="https://ifthe.com/">ifthe.com</a></div>
+    <div class="footer-copyright">&copy; 2026 Thingscorp. Site design modeled on repebble.com, with thanks.</div>
+  </div>
+
+</div>
+</body>
+</html>
