@@ -31,6 +31,12 @@ class. `--profile card` is 648x480 landscape, pure black on white, for
 the 5.83 inch mono panel class (Good Display GDEY0583T81 and kin).
 `--profile kindle` is portrait, below.
 
+Profiles are defined once, as data, in `render_briefing.py`
+(`PROFILE_REGISTRY`: name, page size, colour mode, the CSS that draws
+the page, and the layout shape). The manifest validator, the
+renderer, and the `--profile` flag all read that registry, so adding
+a surface is one registry entry, not edits in three places.
+
 ## Widgets
 
 Every section of the briefing is a widget, and anyone can add one with

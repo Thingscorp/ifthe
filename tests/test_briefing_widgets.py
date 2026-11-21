@@ -407,6 +407,53 @@ with tempfile.TemporaryDirectory() as td:
     check("example setting applies without warnings",
           err == "", err.strip())
 
+# Profile registry: profiles are data, defined once in the renderer.
+# The validator, the render branches, and the CLI all read the
+# registry, so these checks pin the registry itself.
+check("PROFILES is the registry keys in order",
+      rb.PROFILES == tuple(rb.PROFILE_REGISTRY))
+for pname, pspec in rb.PROFILE_REGISTRY.items():
+    check(f"profile {pname} declares size, colour, css, layout",
+          isinstance(pspec["width"], int)
+          and isinstance(pspec["height"], int)
+          and pspec["colour"] in ("color", "mono")
+          and pspec["layout"] in ("columns", "single")
+          and f"width: {pspec['width']}px" in pspec["css"]
+          and f"height: {pspec['height']}px" in pspec["css"])
+    probe = {"id": "probe", "title": "Probe", "version": "1.0.0",
+             "slot": "main", "order": 1, "profiles": [pname],
+             "template": "items", "reads": []}
+    check(f"validator accepts registry profile {pname}",
+          rb.validate_manifest(probe, "probe") is None)
+
+bad = {"id": "probe", "title": "Probe", "version": "1.0.0",
+       "slot": "main", "order": 1, "profiles": ["watch"],
+       "template": "items", "reads": []}
+check("validator rejects a profile outside the registry",
+      rb.validate_manifest(bad, "probe")
+      == "profiles must be a subset of " + ", ".join(rb.PROFILES))
+
+builtins = rb.builtin_widgets(rb.make_export_loader(str(SAMPLE)))
+check("built in widgets declare exactly the registry profiles",
+      all(w["manifest"]["profiles"] == list(rb.PROFILES)
+          for w in builtins.values()))
+
+source = MOD.read_text()
+registry_block = source[source.index("PROFILE_REGISTRY = {"):
+                        source.index("PROFILES = tuple(PROFILE_REGISTRY)")]
+outside_registry = source.replace(registry_block, "")
+check("no profile name is hardcoded outside the registry",
+      '"kindle"' not in outside_registry
+      and '"card"' not in outside_registry)
+
+with tempfile.TemporaryDirectory() as td:
+    data, _ = make_case(Path(td))
+    for pname, pspec in rb.PROFILE_REGISTRY.items():
+        page, err = render(data, profile=pname)
+        check(f"sample data renders on profile {pname} with its css",
+              pspec["css"] in page and "ifthe morning briefing" in page,
+              err.strip())
+
 passed = sum(1 for _, ok, _ in results if ok)
 fails = [(n, d) for n, ok, d in results if not ok]
 print(f"\nbriefing_widgets: {passed}/{len(results)} checks passed")

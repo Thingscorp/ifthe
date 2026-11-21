@@ -100,7 +100,20 @@ footer { border-top: 1px solid #bbb; padding-top: 7px; font-size: 11px;
   color: #777; display: flex; justify-content: space-between; }
 """
 
-PROFILES = ("panel", "card", "kindle")
+# Profiles are data, defined once here. The manifest validator, the
+# renderer, and the CLI all read this registry, so a new profile is one
+# entry: name, page size in pixels, colour mode ("color" or "mono"),
+# the CSS that draws the page, and the layout shape ("columns" is a
+# main column plus a side column, "single" is one column top to bottom).
+PROFILE_REGISTRY = {
+    "panel": {"width": 800, "height": 480, "colour": "color",
+              "css": CSS, "layout": "columns"},
+    "card": {"width": 648, "height": 480, "colour": "mono",
+             "css": CARD_CSS, "layout": "columns"},
+    "kindle": {"width": 1072, "height": 1448, "colour": "mono",
+               "css": KINDLE_CSS, "layout": "single"},
+}
+PROFILES = tuple(PROFILE_REGISTRY)
 SLOTS = ("main", "side", "glance")
 TEMPLATES = ("lines", "items", "status", "text")
 RESERVED_IDS = ("today", "home", "money", "list")
@@ -378,7 +391,7 @@ def validate_manifest(manifest, folder_name):
     if not isinstance(profiles, list) or not profiles \
             or any(p not in PROFILES for p in profiles) \
             or len(set(profiles)) != len(profiles):
-        return "profiles must be a subset of panel, card, kindle"
+        return "profiles must be a subset of " + ", ".join(PROFILES)
     if manifest["template"] not in TEMPLATES:
         return f"unknown template {manifest['template']}"
     reads = manifest["reads"]
@@ -742,13 +755,13 @@ def render(data_dir, now=None, profile="panel"):
     widgets = sort_widgets(widgets, layout)
     clock = now.strftime("%-I:%M")
     day = now.strftime("%A, %B %-d")
-    if profile == "kindle":
+    profile_spec = PROFILE_REGISTRY[profile]
+    if profile_spec["layout"] == "single":
         sections_html = "\n".join(render_widget(w) for w in widgets)
         body = f"""<header><div class="clock">{clock}</div><div class="day">{esc(day)}</div></header>
 <main>
 {sections_html}
 </main>"""
-        css = KINDLE_CSS
     else:
         main_html = "\n".join(render_widget(w) for w in widgets
                               if w["manifest"]["slot"] in ("main", "glance"))
@@ -763,7 +776,7 @@ def render(data_dir, now=None, profile="panel"):
 {side_html}
 </div>
 </main>"""
-        css = CARD_CSS if profile == "card" else CSS
+    css = profile_spec["css"]
     page = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <title>ifthe briefing</title><style>{css}</style></head>
@@ -779,7 +792,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="sample-data")
     ap.add_argument("--out", default="briefing.html")
-    ap.add_argument("--profile", choices=["panel", "kindle", "card"], default="panel")
+    ap.add_argument("--profile", choices=list(PROFILE_REGISTRY), default="panel")
     args = ap.parse_args()
     page = render(args.data, profile=args.profile)
     with open(args.out, "w") as fh:

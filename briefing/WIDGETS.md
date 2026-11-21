@@ -62,6 +62,20 @@ widgets/
 Unknown fields are ignored. A missing required field, a bad id, or an
 unknown template or slot skips the widget (see failure rules).
 
+## Identity
+
+A widget's id is its name in every pack, index, and settings file,
+so it is made once and then left alone:
+
+- Tooling generates the id when a widget is published (the
+  converter, for example, derives it from the Pebble package name).
+  A hand-picked id is fine for a private widget that never leaves
+  the house.
+- Once a widget is published, its id is never hand edited. An update
+  keeps the id and raises the version. Publishing the same widget
+  under a new id makes it a different widget, and the old id is
+  retired, not reused by another widget.
+
 ## Templates
 
 The renderer owns all markup. A widget picks a template and supplies
@@ -128,6 +142,32 @@ On profiles with no room for the full widget (today: none, reserved
 for a smaller surface), the renderer may print the glance line alone.
 At most 48 characters. This is the AppGlance rule: one line, host
 rendered, expires with the data file.
+
+## Timed items
+
+Some briefing data is a list of moments rather than a snapshot: the
+day's events are the first example. A timed item is the shared shape
+for one moment, modelled on the Pebble timeline pin and cut down to
+display only:
+
+```json
+{ "id": "dentist-2026-11-21", "time": "2026-11-21T15:30:00",
+  "layout": "calendar", "title": "Dentist", "body": "Cleaning, 30 min." }
+```
+
+| Field | Rule |
+| --- | --- |
+| `id` | Stable id for the item, at most 64 characters. An id is never reused, even after the item is deleted: a corrected item keeps its id, and a new moment gets a new id. |
+| `time` | When the moment happens, ISO 8601. |
+| `layout` | One of a closed list: `generic`, `calendar`, `weather`, `sports`. The renderer picks the shape; the item supplies only text. |
+| `title` | A short heading. |
+| `body` | Detail text, at most 512 characters. |
+
+Display only, by product rule: a timed item has no actions, sends no
+notifications, and carries no reminders. It prints while its data
+file is current and expires with the file, like the glance line.
+This section fixes the data contract only; renderer support for
+timed items is future work.
 
 ## Settings (optional)
 
@@ -203,6 +243,61 @@ one code path renders everything:
 Reserved ids cannot be reused by folder widgets, except that a local
 widget with a reserved id replaces the built in one. That is the
 supported way to restyle a built in section.
+
+## Packs
+
+A pack is how widgets travel together. A pack is a folder of widget
+folders plus one `pack.json` at its root:
+
+```
+morning-pack/
+  pack.json
+  land-hunt/
+    widget.json
+    data.json
+  house-plants/
+    widget.json
+```
+
+```json
+{ "name": "@russ/morning-pack", "version": "1.0.0",
+  "widgets": ["land-hunt", "house-plants"] }
+```
+
+| Field | Rule |
+| --- | --- |
+| `name` | Scoped name: an `@` handle, a slash, then a slug. Unique in the index. |
+| `version` | `major.minor.patch`, the same rule as a widget version. |
+| `widgets` | The ids of the widgets the pack contains. One folder each, named for the id, and each folder a normal widget folder. |
+
+Installing a pack is one command that copies the pack's widget
+folders into a widgets root; from there each widget follows the
+normal discovery and failure rules, so a bad widget in a pack is
+skipped like any other. The install command itself is future work;
+this section fixes the format it will read.
+
+## The index
+
+The public index is the catalog of published widgets and packs. It
+holds three record kinds, kept separate:
+
+1. **Listing**, one per widget: the widget `id`, its `title`, the
+   author's id, a `category`, and two counters the index maintains,
+   `installs` and `likes`.
+2. **Per-surface assets**, one set per listing: a `description` and a
+   preview image for each profile (`panel`, `card`, `kindle`), so a
+   household can see a widget as it would print on their own surface
+   before installing it.
+3. **Release**, one per published version of a pack: the `version`,
+   release `notes`, and the pack's `checksum`, so an install can
+   check that the pack it fetched is the pack that was published.
+
+The index is a catalog, not a copy. Listing data never goes into the
+widget folder: `widget.json` stays the author's manifest, and the
+index records point at the widget (or the pack that carries it)
+without changing it. A widget works installed from a copied folder
+with no index entry at all, and a listing can exist for a widget no
+one has installed yet.
 
 ## Safety rules
 
