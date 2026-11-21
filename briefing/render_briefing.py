@@ -70,6 +70,29 @@ footer { border-top: 2px solid #000; padding-top: 16px; font-size: 24px;
   color: #555; display: flex; justify-content: space-between; }
 """
 
+CARD_CSS = """
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #ffffff; color: #000000; font-family: "Avenir Next",
+  "Segoe UI", system-ui, sans-serif; width: 648px; height: 480px;
+  overflow: hidden; padding: 22px 26px; display: flex; flex-direction: column; }
+header { display: flex; align-items: baseline; gap: 14px;
+  border-bottom: 2px solid #000; padding-bottom: 8px; }
+.clock { font-size: 50px; font-weight: 600; letter-spacing: -1px; }
+.day { font-size: 21px; }
+main { display: grid; grid-template-columns: 1.35fr 1fr; gap: 6px 28px;
+  padding-top: 12px; flex: 1; }
+h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
+  color: #444; margin-bottom: 6px; }
+section { margin-bottom: 10px; }
+ul { list-style: none; font-size: 16px; line-height: 1.45; }
+ul .t { display: inline-block; min-width: 84px; padding-right: 10px; color: #333; }
+ul.money .t { min-width: 108px; }
+.muted { color: #777; }
+.big { font-size: 17px; line-height: 1.4; }
+footer { border-top: 1px solid #bbb; padding-top: 7px; font-size: 11px;
+  color: #777; display: flex; justify-content: space-between; }
+"""
+
 def load(data_dir, name):
     p = os.path.join(data_dir, name)
     if not os.path.exists(p):
@@ -157,7 +180,7 @@ def render(data_dir, now=None, profile="panel"):
 <section><h2>{esc(month)}</h2><ul class="money">{budget_html(budget)}</ul></section>
 </div>
 </main>"""
-        css = CSS
+        css = CARD_CSS if profile == "card" else CSS
     page = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <title>ifthe briefing</title><style>{css}</style></head>
@@ -173,7 +196,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default="sample-data")
     ap.add_argument("--out", default="briefing.html")
-    ap.add_argument("--profile", choices=["panel", "kindle"], default="panel")
+    ap.add_argument("--profile", choices=["panel", "kindle", "card"], default="panel")
     args = ap.parse_args()
     page = render(args.data, profile=args.profile)
     with open(args.out, "w") as fh:

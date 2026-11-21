@@ -24,6 +24,13 @@ short line and takes less room.
 The renderer never fetches, writes back, or moves anything. It reads
 files and writes one HTML file.
 
+## Profiles
+
+`--profile panel` is the default: 800x480 landscape, the reTerminal
+class. `--profile card` is 648x480 landscape, pure black on white, for
+the 5.83 inch mono panel class (Good Display GDEY0583T81 and kin).
+`--profile kindle` is portrait, below.
+
 ## On a Kindle
 
 The proven pattern for old Kindles is not the browser. The home server
