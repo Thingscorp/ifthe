@@ -5,18 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ifthe: a home server with a morning briefing</title>
 <meta name="description" content="ifthe is a home server with a morning briefing: self-hosted household services, one screen with the day, and a read-only AI layer that can never move your money.">
+<link rel="canonical" href="https://ifthe.com/">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ffffff'/%3E%3Ccircle cx='32' cy='17' r='7' fill='%235c6650'/%3E%3Crect x='26' y='29' width='12' height='25' rx='2' fill='%231c1a17'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ifthe">
+<meta property="og:title" content="ifthe: a home server with a morning briefing">
+<meta property="og:description" content="Self-hosted household services, one e-paper screen with the day, and a read-only AI layer that can never move your money.">
+<meta property="og:url" content="https://ifthe.com/">
+<meta property="og:image" content="https://ifthe.com/img/panel.png">
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background-color: #fff; width: 100%; }
-body { color: #333; letter-spacing: -.3px; font-family: Inter, sans-serif; font-weight: 400; }
+body { color: #333; letter-spacing: -.3px; font-family: Inter, sans-serif; font-weight: 400; -webkit-font-smoothing: antialiased; }
 a { color: #5c6650; text-underline-offset: 2px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; transition: color .2s, text-decoration-color .2s; }
 a:hover { color: #48523e; text-decoration-color: #48523e80; }
+a:focus-visible, .product-card:focus-visible { outline: 2px solid #5c6650; outline-offset: 3px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .page-container { background: #fff; flex-direction: column; max-width: 1100px; min-height: 100vh; margin: 0 auto; display: flex; }
 .header { justify-content: center; align-items: center; padding: 50px 40px; display: flex; position: relative; }
 .header:after { content: ""; background-color: #eee; height: 1px; position: absolute; bottom: 0; left: 60px; right: 60px; }
-.wordmark { font-size: 46px; font-weight: 800; letter-spacing: -2px; color: #171717; line-height: 1; }
+.wordmark { font-size: 46px; font-weight: 800; letter-spacing: -2px; color: #1c1a17; line-height: 1; }
 .wordmark .i { position: relative; }
 .wordmark .i:after { content: ""; position: absolute; left: 50%; top: .02em; transform: translateX(-50%); width: .17em; height: .17em; border-radius: 50%; background: #5c6650; }
 .product-lineup { justify-content: space-between; gap: 10px; padding: 40px 60px; display: flex; position: relative; }
@@ -27,12 +37,12 @@ a:hover { color: #48523e; text-decoration-color: #48523e80; }
 .product-card h3 { text-underline-offset: 2px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; color: #333; margin-bottom: 5px; font-size: .95rem; font-weight: 600; }
 .product-card:hover h3 { text-decoration-color: #48523e80; }
 .product-card.coming-soon h3 { text-decoration: none; }
-.product-card img { object-fit: contain; width: auto; height: 120px; margin: 0 auto 15px; display: block; }
+.product-card img { object-fit: contain; width: auto; height: 120px; margin: 0 auto 15px; display: block; outline: 1px solid rgba(0, 0, 0, .1); outline-offset: -1px; }
 .product-card p { color: #666; margin: 0; font-size: .85rem; line-height: 1.4; }
 .product-card.coming-soon { opacity: .6; }
 .intro { padding: 40px 60px; position: relative; }
 .intro .lead { color: #333; font-weight: 700; }
-.intro p { color: #555; max-width: 700px; margin: 0 0 1em; font-size: 1rem; line-height: 1.7; }
+.intro p { color: #555; max-width: 700px; margin: 0 0 1em; font-size: 1rem; line-height: 1.7; text-wrap: pretty; }
 .intro p:last-child { margin-bottom: 0; }
 .intro strong { color: #333; }
 .resources { gap: 40px; padding: 40px 60px; display: flex; position: relative; }
@@ -48,9 +58,13 @@ a:hover { color: #48523e; text-decoration-color: #48523e80; }
 .resources-col li a:hover { color: #5c6650; }
 .footer { flex-direction: column; align-items: flex-start; gap: 8px; margin-top: auto; padding: 20px 60px; display: flex; }
 .footer-links { font-size: .85rem; }
-.footer-links a { color: #333; text-decoration: none; }
+.footer-links a { color: #333; text-decoration: none; padding: 8px 4px; margin: -8px -4px; display: inline-block; }
 .footer-links a:hover { color: #5c6650; text-decoration: none; }
-.footer-copyright { color: #999; font-size: .85rem; }
+.footer-copyright { color: #737373; font-size: .85rem; }
+@media (prefers-reduced-motion: reduce) {
+  .product-card { transition: none; }
+  .product-card:hover { transform: none; }
+}
 @media (max-width: 900px) {
   .product-lineup { grid-template-columns: repeat(3, 1fr); display: grid; }
   .product-card { flex: none; margin-bottom: 20px; }
@@ -100,7 +114,7 @@ a:hover { color: #48523e; text-decoration-color: #48523e80; }
 
   <div class="intro">
     <p class="lead">Your house, on one screen.</p>
-    <p>ifthe is a home server with a morning briefing. It runs the household services (budget, files, photos, documents, backups) on one small box on your own network, and every morning it puts one page together: <strong>today's calendar</strong>, <strong>whether the backup ran</strong>, <strong>the state of the house</strong>, and <strong>the list that matters this week</strong>. The page goes to an e-paper panel, so it is just there when you walk into the kitchen.</p>
+    <p>ifthe is a home server with a morning briefing. It runs the household services (budget, files, photos, documents, backups) on one small box on your own network, and every morning it puts one page together: <strong>today's calendar</strong>, <strong>whether the backup ran</strong>, <strong>whether everything is up</strong>, and <strong>the list that matters this week</strong>. The page goes to an e-paper panel, so it is just there when you walk into the kitchen.</p>
     <p>Why? Because the day's facts are scattered across six apps, and none of them shows the whole picture. ifthe follows the rules the original Pebble got right: an <strong>always-on e-paper screen</strong>, <strong>one page with the whole day</strong>, <strong>buttons instead of touch</strong>, and <strong>nothing that asks for your attention back</strong>.</p>
     <p><strong>Our goal is simple</strong>: one screen with the day on it, built from parts anyone can buy, with the code public so you can run your own. Your data stays on your network. The AI layer reads the exports and answers questions out loud when you ask, and it is built so it can never move your money.</p>
   </div>

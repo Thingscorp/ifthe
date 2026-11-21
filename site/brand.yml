@@ -1,0 +1,75 @@
+# ifthe brand configuration
+# Extracted by the brand-guidelines skill (skill-chain, discovery phase).
+# Sources: site/index.html, briefing/render_briefing.py profiles, BRAND-PROMPT.md,
+# and the repebble.com REA run (~/workspace/rea-repebble/REA.md) for layout measurements.
+# Every agent writing ifthe copy or building ifthe surfaces references this file.
+
+wordmark:
+  text: "ifthe"
+  case: lowercase, always
+  construction: "Inter, weight 800, letter spacing -2px at display size; the dot of the i is sage, every other letter is ink"
+  min_size: "24px tall on screen"
+  clear_space: "the height of the f on all sides"
+  variants: "ink on paper white; paper white on ink for dark surfaces"
+  never: ["capitalize it", "add a tagline inside the wordmark", "recolor letters other than the i dot", "set it in another font"]
+
+colors:
+  ink: "#1c1a17"        # primary text, wordmark
+  ink_soft: "#333333"   # body text on the landing (repebble role)
+  text_secondary: "#555555"
+  text_muted: "#666666"
+  faint: "#737373"      # footer copyright only; darkened from #999999 in the polish pass to meet WCAG AA on white
+  paper: "#f7f4ec"      # briefing panel background
+  paper_white: "#ffffff" # landing background
+  hairline: "#eeeeee"   # all dividers, 1px, inset 60px desktop / 20px mobile
+  accent: "#5c6650"     # muted sage: links, the i dot, resource titles
+  accent_hover: "#48523e"
+  accent_underline: "#5c665040"  # accent at 25% alpha, the resting link underline
+  rules:
+    - "One accent only. No second brand color anywhere."
+    - "No gradients, no shadows, no colored section backgrounds on the landing."
+    - "E-paper surfaces are pure black on white (kindle and card profiles) or ink on paper (panel profile)."
+
+typography:
+  family: "Inter, sans-serif"
+  letter_spacing: "-0.3px body; -2px wordmark at 46px"
+  levels:
+    wordmark: { size: "46px desktop, 36px mobile", weight: 800 }
+    card_name: { size: "0.95rem", weight: 600 }
+    card_line: { size: "0.85rem", line_height: 1.4, color: "#666666" }
+    intro: { size: "1rem", line_height: 1.7, color: "#555555", max_width: "700px" }
+    intro_lead: { weight: 700, color: "#333333", note: "a bold line in the paragraph flow, never a display headline" }
+    resource_title: { size: "0.95rem", weight: 600, color: accent }
+    resource_desc: { size: "0.85rem", line_height: 1.4, color: "#555555" }
+    footer: { size: "0.85rem" }
+
+layout:
+  column: "max-width 1100px, centered"
+  section_padding: "40px 60px desktop, 30px 20px mobile"
+  header_padding: "50px 40px desktop, 35px 20px mobile"
+  dividers: "1px #eeeeee, inset to the section padding, under header, lineup, and resources; never under the intro"
+  breakpoints:
+    - "900px: lineup cards to a 3 column grid, resources stack"
+    - "600px: lineup cards to a 2 column grid, padding drops to 20px"
+  components:
+    product_card:
+      use: "one product per card: image, name, one line with its honest status"
+      image: "120px tall desktop, 80px mobile, object-fit contain"
+      hover: "scale 1.03"
+      coming_soon: "opacity 0.6, no hover scale, status stated in its line"
+      never: ["borders or shadows on cards", "more than one sentence per card", "star ratings or badges"]
+    resource_link:
+      use: "a title line in accent with a one line description under it"
+      never: ["buttons for resources", "icons next to resource titles"]
+
+voice:
+  style: "plain functional words, active voice, short sentences, facts over adjectives"
+  person: "we for the project, you for the reader"
+  sentence_length: "under 20 words where possible"
+  banned_words: ["quiet", "calm"]
+  banned_punctuation: ["em-dash: use commas, periods, or colons"]
+  rules:
+    - "Name what the product does. Never describe a mood."
+    - "State honest status: in the works, built, public. Never imply a thing exists before it does."
+    - "Bold the traits inside paragraphs, the repebble pattern. No slogans."
+    - "Credit sources on the page (design model, SDK, wiki) in the footer or the built-on list."
