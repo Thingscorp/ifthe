@@ -24,6 +24,28 @@ briefing exports (default `/srv/ifthe/exports`), `IFTHE_LEDGER` for the
 ledger (default `$IFTHE_DATA_ROOT/ai/ledger.json`, data root default
 `/srv/ifthe`).
 
+## The briefing on a display board (CrowPanel and other full-UI boards)
+
+Full-UI display boards in the Gadget SDK, such as the Elecrow
+CrowPanel Advance 4.3 (800x480), accept a pushed image from Claude.
+Build the image from the same briefing data:
+
+    python3 gadget/display/make_jpeg.py [--data DIR] [--out briefing.jpg]
+
+It renders the panel profile and screenshots it at exactly 800x480,
+the board's canvas. Muse then pushes it with `display.draw_url`
+(a hosted URL) or `display.draw_file` (a path to the file on the VM).
+The image shows as an overlay on the board face and clears on a tap,
+a talk press, or the menu, so a morning push stays up on an untouched
+panel and the next briefing is a fresh push.
+
+The output is JPEG because the board takes nothing else: the SDK's
+image path (esp32/main/image_fetch.c in the Muse Gadget SDK) decodes
+JPEG and has no PNG handling at all. That was verified from the SDK
+source in the project's iteration 2 check (CROWPANEL-CHECK.md,
+workspace record). The Kindle path keeps its PNG; this is the parallel
+output for these boards, and neither path changes the other.
+
 ## Install on the gadget box
 
 Prerequisite: the Muse Gadget Linux service installed and paired
@@ -50,7 +72,10 @@ the modes above.
 
 Behavior tests against fixtures, including the budget boundary:
 October spend never leaks into November's summary, and no transaction
-or payee data appears in the budget answer.
+or payee data appears in the budget answer. The display JPEG path has
+its own end-to-end test in the repo suite, tests/test_display_jpeg.py,
+which runs make_jpeg.py on the sample data and reads the result back
+with PIL (format, exact size, not a flat frame).
 
 Validation (2026-11-20): all five definitions pass the SDK's own
 commands.py loader from the muse-gadget-sdk checkout: parse, load,

@@ -10,7 +10,9 @@ Usage:
                         [--width 1072] [--height 1448]
 
 The browser binary is found from $CHROME_BIN, then google-chrome,
-chromium, chromium-browser, chrome on PATH. Any Chromium build works;
+chromium, chromium-browser, chrome on PATH, then the Chrome for
+Testing build this project's dev machines keep at
+~/workspace/tools/chrome-linux64/chrome. Any Chromium build works;
 the page is one static HTML file with no scripts or external assets.
 """
 import argparse, os, shutil, subprocess, sys, tempfile
@@ -27,6 +29,10 @@ def find_chrome():
         path = shutil.which(name)
         if path:
             return path
+    local = os.path.join(os.path.expanduser("~"), "workspace", "tools",
+                         "chrome-linux64", "chrome")
+    if os.path.isfile(local):
+        return local
     return None
 
 
