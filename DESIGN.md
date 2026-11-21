@@ -50,6 +50,46 @@ typography:
     fontFamily: "Avenir Next, Segoe UI, system-ui, sans-serif"
     fontSize: "13px"
     letterSpacing: "2px"
+  caption:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "0.85rem"
+    fontWeight: 400
+    lineHeight: 1.4
+  display-mobile:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "36px"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "-2px"
+  body-mobile:
+    fontFamily: "Inter, sans-serif"
+    fontSize: "0.9rem"
+    fontWeight: 400
+    lineHeight: 1.7
+  ambient-clock:
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "clamp(48px, 11vw, 92px)"
+    fontWeight: 600
+  ambient-date:
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "clamp(15px, 2.4vw, 20px)"
+    fontWeight: 400
+  ambient-agenda:
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "clamp(15px, 2.2vw, 18px)"
+    fontWeight: 400
+  app-icon:
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "19px"
+    fontWeight: 600
+  app-desc:
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+  frontdoor-note:
+    fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
 rounded:
   icon: "11px"
   card: "14px"
@@ -138,11 +178,13 @@ A warm paper palette with a single muted green accent, extracted from the landin
 
 ### Hierarchy
 
-- **Display** (Inter, 800, 46px, line-height 1, letter-spacing -2px): the landing wordmark only. Its i carries no dot; a sage circle sits in its place.
+- **Display** (Inter, 800, 46px, line-height 1, letter-spacing -2px): the landing wordmark only (36px under 600px). Its i carries no dot; a sage circle sits in its place.
 - **Clock, panel** (sans stack, 600, 64px, letter-spacing -1px): the panel briefing's time. The Kindle clock is the same voice at 150px and weight 700; the card clock at 50px.
 - **Headline** (system stack, 600, clamp(22px, 4vw, 30px), letter-spacing -0.01em): the front door's bar title. The ambient clock is the same stack at clamp(48px, 11vw, 92px).
 - **Title** (Inter, 600, 0.95rem): landing product names and resource titles.
 - **Body** (Inter, 400, 1rem, line-height 1.7): landing intro paragraphs, capped at 700px measure. Briefing lists run 19px at line-height 1.45 on the panel, 16px on the card, 38px on the Kindle.
+- **Caption** (Inter, 400, 0.85rem, line-height 1.4): the landing's small text: product card lines, resource descriptions and list items, footer links and copyright. The intro body drops to 0.9rem under 600px.
+- **Front door steps** (system stack): secondary text (bar status, greeting, tile headings) at 14px; app descriptions and the footer line at 12px; the app icon initial at 19px, weight 600; the ambient date at clamp(15px, 2.4vw, 20px) and agenda rows at clamp(15px, 2.2vw, 18px).
 - **Label** (sans stack, 13px, uppercase, letter-spacing 2px, sage): briefing section labels. The Kindle label is 24px with 4px tracking; the card label is 11px in dark gray.
 
 ### Named Rules

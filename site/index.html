@@ -34,9 +34,9 @@ a:focus-visible, .product-card:focus-visible { outline: 2px solid #5c6650; outli
 .product-card { text-align: center; flex: 1; padding: 10px; text-decoration: none; transition: transform .2s, opacity .2s; }
 .product-card:hover { text-decoration: none; transform: scale(1.03); }
 .product-card.coming-soon:hover { transform: none; }
-.product-card h3 { text-underline-offset: 2px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; color: #333; margin-bottom: 5px; font-size: .95rem; font-weight: 600; }
-.product-card:hover h3 { text-decoration-color: #48523e80; }
-.product-card.coming-soon h3 { text-decoration: none; }
+.product-card h2 { text-underline-offset: 2px; text-decoration: underline #5c665040; text-decoration-thickness: 1px; color: #333; margin-bottom: 5px; font-size: .95rem; font-weight: 600; }
+.product-card:hover h2 { text-decoration-color: #48523e80; }
+.product-card.coming-soon h2 { text-decoration: none; }
 .product-card img { object-fit: contain; width: auto; height: 120px; margin: 0 auto 15px; display: block; outline: 1px solid rgba(0, 0, 0, .1); outline-offset: -1px; }
 .product-card p { color: #666; margin: 0; font-size: .85rem; line-height: 1.4; }
 .product-card.coming-soon { opacity: .6; }
@@ -97,17 +97,17 @@ a:focus-visible, .product-card:focus-visible { outline: 2px solid #5c6650; outli
   <div class="product-lineup">
     <a class="product-card coming-soon" href="https://github.com/Thingscorp/ifthe">
       <img src="img/panel.png" alt="The ifthe panel showing the morning briefing">
-      <h3>ifthe Panel</h3>
+      <h2>ifthe Panel</h2>
       <p>A 4x6 e-paper panel for the counter. Buttons, no touch, weeks between charges. In the works.</p>
     </a>
     <a class="product-card" href="https://github.com/Thingscorp/ifthe">
       <img src="img/home.png" alt="The ifthe morning briefing at 800 by 480">
-      <h3>ifthe Home</h3>
+      <h2>ifthe Home</h2>
       <p>The server: budget, files, documents and backups on one small box, with the briefing built in. The code is public.</p>
     </a>
     <a class="product-card" href="https://github.com/Thingscorp/ifthe/blob/main/kindle/README.md">
       <img src="img/kindle.png" alt="The ifthe morning briefing on a Kindle">
-      <h3>ifthe for Kindle</h3>
+      <h2>ifthe for Kindle</h2>
       <p>The same briefing on an old Kindle. The server renders a picture, the Kindle draws it. Built, and in the repo.</p>
     </a>
   </div>

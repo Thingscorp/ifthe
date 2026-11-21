@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-21T06:10:43Z",
+  "generatedAt": "2026-11-21T06:37:24Z",
   "title": "Design System: ifthe",
   "extensions": {
     "colorMeta": {
@@ -370,6 +370,42 @@
       "label": {
         "displayName": "Label",
         "purpose": "Briefing section labels, uppercase with wide tracking."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Landing small text: product card lines, resource descriptions, footer."
+      },
+      "display-mobile": {
+        "displayName": "Display Mobile",
+        "purpose": "The landing wordmark under 600px."
+      },
+      "body-mobile": {
+        "displayName": "Body Mobile",
+        "purpose": "Landing intro body under 600px."
+      },
+      "ambient-clock": {
+        "displayName": "Ambient Clock",
+        "purpose": "Front door ambient screen time."
+      },
+      "ambient-date": {
+        "displayName": "Ambient Date",
+        "purpose": "Front door ambient screen date line."
+      },
+      "ambient-agenda": {
+        "displayName": "Ambient Agenda",
+        "purpose": "Front door ambient agenda rows."
+      },
+      "app-icon": {
+        "displayName": "App Icon",
+        "purpose": "Front door app icon initial."
+      },
+      "app-desc": {
+        "displayName": "App Description",
+        "purpose": "Front door app card descriptions and footer line."
+      },
+      "frontdoor-note": {
+        "displayName": "Front Door Note",
+        "purpose": "Front door secondary text: bar status, greeting, tile headings."
       }
     },
     "shadows": [],
