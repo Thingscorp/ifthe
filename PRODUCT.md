@@ -16,6 +16,10 @@ The reference home is the owner's household, whose private deployment (franklinO
 
 ifthe is a home server with a morning briefing. One small always-on computer in the home runs the household's services. One screen shows the day: today's agenda, service health, whether last night's backup ran, a budget snapshot, and the household's own tracked lists. An AI layer reads exported files and answers questions about the house. Success is a household running its own copy day to day, glancing at one screen in the morning instead of opening feeds and apps.
 
+## Direction
+
+The overarching goal is a widget system that grows by contribution. The household's services are interconnected systems that publish plain data. Interfaces are translated: one widget definition renders on the panel, the Kindle, the card, and the front door, each at its own size and rules. Widgets are mix-and-match: a widget is a folder of data and settings declarations that a person can write, share, and drop into any ifthe home. The target shape is a public repository of widgets anyone can contribute to, browsed and installed the way the Pebble app store worked, with connections between systems stated as simply as an IFTTT rule: when this source changes, show it on that screen. Simplicity is the bar: if a widget or a connection cannot be understood at a glance, it is not done. Owner ruling, 2026-11-21.
+
 ## Positioning
 
 The AI layer is read-only by construction, and a mechanical guard in the check suite fails the build if an exporter ever gains a money-moving or write call. Neighboring home-server and AI products ask for trust; ifthe removes the capability. The household's data stays on the home network, the repo ships fictional example data only, and the whole product is a template meant to be copied, not a service anyone signs up for.
@@ -68,3 +72,4 @@ Undecided, recorded as open: the license (not yet picked), the panel hardware (n
 3. One screen, glance first. The morning briefing is the product's center; everything else supports it.
 4. The template is the product. Every decision is judged by whether a stranger's household can copy it and run it.
 5. Plain words, honest status. Copy names what a thing does and what state it is in, nothing more.
+6. Widgets are data, contributed by anyone. The renderer owns the markup; a widget never ships code.
