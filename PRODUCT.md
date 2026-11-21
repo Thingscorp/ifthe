@@ -50,7 +50,7 @@ Constraints:
 - The one paid extra in the reference home is bank sync (SimpleFIN Bridge, about $15 per year). Everything else is free and open source.
 - Bank and budget answers are summaries with labeled lines, never transactions or payees.
 
-Undecided, recorded as open: the license (not yet picked), the panel hardware (not yet bought), and the gadget pairing (Slice 1 not yet run on a Linux box). Also open: repository sign-in through Meta's system (owner wish, 2026-11-21; the gadget already pairs the box to the owner's Muse, but a Meta login for the widget repository is a separate path and is unverified).
+License: Apache 2.0 (decided 2026-11-21 under the owner's standing grant of executive decisions on this build; it matches the Muse Gadget SDK ifthe builds on, and the full text is in LICENSE at the repo root). Undecided, recorded as open: the panel hardware (not yet bought), and the gadget pairing (Slice 1 not yet run on a Linux box). Also open: repository sign-in through Meta's system (owner wish, 2026-11-21; the gadget already pairs the box to the owner's Muse, but a Meta login for the widget repository is a separate path and is unverified).
 
 ## Brand Commitments
 
