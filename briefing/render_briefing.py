@@ -12,12 +12,16 @@ missing file renders a graceful empty state, never an error):
                  "value": "$1,240"}]}
   list.json     {"title": "Shopping", "items": ["Eggs", "Coffee"]}
 
+Sections are widgets. The four built in sections and any folder widgets
+found by the render time scan render through the same path. The widget
+contract lives in briefing/WIDGETS.md: data only, host rendered, bounded.
+
 Writes a single self-contained HTML file: no scripts, no external assets,
 sized for an 800x480 color e-ink panel and readable on any browser.
 
   python3 render_briefing.py --data ./sample-data --out briefing.html
 """
-import argparse, html, json, os
+import argparse, html, json, os, re, sys
 from datetime import datetime
 
 CSS = """
@@ -94,6 +98,27 @@ footer { border-top: 1px solid #bbb; padding-top: 7px; font-size: 11px;
   color: #777; display: flex; justify-content: space-between; }
 """
 
+PROFILES = ("panel", "card", "kindle")
+SLOTS = ("main", "side", "glance")
+TEMPLATES = ("lines", "items", "status", "text")
+RESERVED_IDS = ("today", "home", "money", "list")
+MAX_WIDGET_FILE_BYTES = 64 * 1024
+MAX_LINES = 4
+MAX_ITEMS = 6
+MAX_STATUS_LINES = 3
+MAX_TEXT_CHARS = 220
+MAX_GLANCE_CHARS = 48
+ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+EXPORT_RE = re.compile(r"^[a-z0-9]+(?:[-_][a-z0-9]+)*$")
+SETTING_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+CODE_SUFFIXES = {
+    ".py", ".pyc", ".pyo", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx",
+    ".sh", ".bash", ".zsh", ".pl", ".rb", ".php", ".exe", ".com", ".bat",
+    ".cmd", ".ps1", ".jar", ".class",
+}
+
+
 def load(data_dir, name):
     p = os.path.join(data_dir, name)
     if not os.path.exists(p):
@@ -106,41 +131,94 @@ def esc(s):
     return html.escape(str(s))
 
 
+def warn(message):
+    print(f"warning: {message}", file=sys.stderr)
+
+
+def text_value(value):
+    """Return a display string for a scalar, or None for anything else."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    return None
+
+
+def safe_load_json(path, label):
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as fh:
+            return json.load(fh)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        warn(f"skipping unreadable {label}: {exc}")
+        return None
+
+
+def make_export_loader(data_dir):
+    cache = {}
+
+    def get_export(name):
+        if name not in cache:
+            path = os.path.join(data_dir, f"{name}.json")
+            cache[name] = safe_load_json(path, f"export {name}")
+        return cache[name]
+
+    return get_export
+
+
 def agenda_html(agenda):
-    if not agenda or not agenda.get("events"):
+    if not agenda or not isinstance(agenda.get("events"), list):
+        return '<li class="muted">Nothing on the calendar.</li>'
+    events = [e for e in agenda["events"] if isinstance(e, dict)][:6]
+    if not events:
         return '<li class="muted">Nothing on the calendar.</li>'
     rows = []
-    for e in agenda["events"][:6]:
+    for e in events:
         t = "All day" if e.get("all_day") or not e.get("time") else e["time"]
         rows.append(f'<li><span class="t">{esc(t)}</span>{esc(e.get("title", ""))}</li>')
     return "\n".join(rows)
 
 
+def status_lines(status):
+    """Shape a status export into status template lines."""
+    if not isinstance(status, dict):
+        return []
+    up, total = status.get("services_up"), status.get("services_total")
+    down_raw = status.get("down") or []
+    down = []
+    if isinstance(down_raw, list):
+        down = [v for v in (text_value(item) for item in down_raw) if v is not None]
+    if down:
+        lines = [{"text": f"{up} of {total} services up. Down: {', '.join(down)}.",
+                  "state": "warn"}]
+    else:
+        lines = [{"text": f"All {total} services up.", "state": "ok"}]
+    if status.get("backup_last"):
+        ok = status.get("backup_ok", True)
+        word = "ran" if ok else "needs a look"
+        lines.append({"text": f"Backup {word} at {status['backup_last']}.",
+                      "state": "ok" if ok else "warn"})
+    else:
+        lines.append({"text": "No backup report yet.", "state": "muted"})
+    return lines
+
+
 def home_html(status):
     if not status:
         return '<p class="big muted">No status report yet.</p>'
-    up, total = status.get("services_up"), status.get("services_total")
-    down = status.get("down") or []
-    if down:
-        line1 = f'<p class="big warn">{up} of {total} services up. Down: {esc(", ".join(down))}.</p>'
-    else:
-        line1 = f'<p class="big ok">All {total} services up.</p>'
-    if status.get("backup_last"):
-        ok = status.get("backup_ok", True)
-        cls = "ok" if ok else "warn"
-        word = "ran" if ok else "needs a look"
-        line2 = f'<p class="big {cls}">Backup {word} at {esc(status["backup_last"])}.</p>'
-    else:
-        line2 = '<p class="big muted">No backup report yet.</p>'
-    return line1 + line2
+    return "".join(
+        f'<p class="big {line["state"]}">{esc(line["text"])}</p>'
+        for line in status_lines(status)
+    )
 
 
 def budget_html(budget):
     if not budget or not budget.get("lines"):
         return '<p class="big muted">No budget snapshot yet.</p>'
     rows = [f'<li><span class="t">{esc(l.get("label", ""))}</span>{esc(l.get("value", ""))}</li>'
-            for l in budget["lines"][:4]]
-    return "\n".join(rows)
+            for l in budget["lines"][:4] if isinstance(l, dict)]
+    return "\n".join(rows) if rows else '<p class="big muted">No budget snapshot yet.</p>'
 
 
 def list_html(lst):
@@ -151,34 +229,449 @@ def list_html(lst):
             f"<ul>{items}</ul></section>")
 
 
+def valid_lines(data):
+    lines = data.get("lines") if isinstance(data, dict) else None
+    valid = []
+    if isinstance(lines, list):
+        for entry in lines:
+            if not isinstance(entry, dict):
+                continue
+            label = text_value(entry.get("label"))
+            value = text_value(entry.get("value"))
+            if label is not None and value is not None:
+                valid.append({"label": label, "value": value})
+    return valid[:MAX_LINES]
+
+
+def valid_items(data):
+    items = data.get("items") if isinstance(data, dict) else None
+    valid = []
+    if isinstance(items, list):
+        for item in items:
+            value = text_value(item)
+            if value is not None:
+                valid.append(value)
+    return valid[:MAX_ITEMS]
+
+
+def valid_status_lines(data):
+    lines = data.get("lines") if isinstance(data, dict) else None
+    valid = []
+    if isinstance(lines, list):
+        for entry in lines:
+            if not isinstance(entry, dict):
+                continue
+            text = text_value(entry.get("text"))
+            if text is None:
+                continue
+            state = entry.get("state")
+            valid.append({"text": text,
+                          "state": state if state in ("ok", "warn", "muted") else "muted"})
+    return valid[:MAX_STATUS_LINES]
+
+
+def builtin_widgets(get_export):
+    agenda = get_export("agenda")
+    status = get_export("status")
+    budget = get_export("budget")
+    lst = get_export("list")
+    agenda = agenda if isinstance(agenda, dict) else None
+    budget = budget if isinstance(budget, dict) else None
+    lst = lst if isinstance(lst, dict) else None
+    month = text_value(budget.get("month")) if budget else None
+    widgets = [
+        {
+            "manifest": {"id": "today", "title": "Today", "version": "1.0.0",
+                         "slot": "main", "order": 10, "profiles": list(PROFILES),
+                         "template": "agenda", "reads": ["agenda"]},
+            "data": agenda,
+            "empty_text": "Nothing on the calendar.",
+        },
+        {
+            "manifest": {"id": "home", "title": "Home", "version": "1.0.0",
+                         "slot": "side", "order": 20, "profiles": list(PROFILES),
+                         "template": "status", "reads": ["status"]},
+            "data": {"lines": status_lines(status)},
+            "empty_text": "No status report yet.",
+        },
+        {
+            "manifest": {"id": "money", "title": month or "Money", "version": "1.0.0",
+                         "slot": "side", "order": 30, "profiles": list(PROFILES),
+                         "template": "lines", "reads": ["budget"]},
+            "data": {"lines": budget.get("lines") if budget else []},
+            "empty_text": "No budget snapshot yet.",
+        },
+        {
+            "manifest": {"id": "list", "title": "List", "version": "1.0.0",
+                         "slot": "main", "order": 40, "profiles": list(PROFILES),
+                         "template": "items", "reads": ["list"]},
+            "data": lst or {},
+            "empty_text": "No list yet.",
+            "title_from_data": True,
+        },
+    ]
+    return {w["manifest"]["id"]: w for w in widgets}
+
+
+def validate_settings(settings):
+    if settings is None:
+        return None
+    if not isinstance(settings, list):
+        return "settings must be a list"
+    for entry in settings:
+        if not isinstance(entry, dict):
+            return "each setting must be an object"
+        key = entry.get("key")
+        if not isinstance(key, str) or not SETTING_KEY_RE.match(key):
+            return "a setting has a bad key"
+        if entry.get("type") not in ("toggle", "select", "input"):
+            return f"setting {key} has an unknown type"
+        label = entry.get("label")
+        if not isinstance(label, str) or not label:
+            return f"setting {key} has no label"
+        default = entry.get("default")
+        if entry["type"] == "toggle" and default is not None \
+                and not isinstance(default, bool):
+            return f"setting {key} toggle default must be true or false"
+        if entry["type"] == "select":
+            options = entry.get("options")
+            if not isinstance(options, list) or not options \
+                    or not all(isinstance(o, str) for o in options):
+                return f"setting {key} select needs a list of options"
+            if default is not None and default not in options:
+                return f"setting {key} select default is not one of its options"
+        if entry["type"] == "input" and default is not None \
+                and text_value(default) is None:
+            return f"setting {key} input default must be text"
+    return None
+
+
+def validate_manifest(manifest, folder_name):
+    if not isinstance(manifest, dict):
+        return "widget.json must hold an object"
+    for field in ("id", "title", "version", "slot", "order",
+                  "profiles", "template", "reads"):
+        if field not in manifest:
+            return f"missing required field {field}"
+    wid = manifest["id"]
+    if not isinstance(wid, str) or not ID_RE.match(wid):
+        return "id is not a lowercase slug"
+    if wid != folder_name:
+        return f"id {wid} does not match folder {folder_name}"
+    title = manifest["title"]
+    if not isinstance(title, str) or not title:
+        return "title must be text"
+    version = manifest["version"]
+    if not isinstance(version, str) or not VERSION_RE.match(version):
+        return "version must be major.minor.patch"
+    if "author" in manifest and not isinstance(manifest["author"], str):
+        return "author must be text"
+    if manifest["slot"] not in SLOTS:
+        return f"unknown slot {manifest['slot']}"
+    order = manifest["order"]
+    if not isinstance(order, int) or isinstance(order, bool):
+        return "order must be an integer"
+    profiles = manifest["profiles"]
+    if not isinstance(profiles, list) or not profiles \
+            or any(p not in PROFILES for p in profiles) \
+            or len(set(profiles)) != len(profiles):
+        return "profiles must be a subset of panel, card, kindle"
+    if manifest["template"] not in TEMPLATES:
+        return f"unknown template {manifest['template']}"
+    reads = manifest["reads"]
+    if not isinstance(reads, list) \
+            or any(not isinstance(r, str) or not EXPORT_RE.match(r) for r in reads):
+        return "reads must be a list of plain export names"
+    return validate_settings(manifest.get("settings"))
+
+
+def folder_code_file(widget_dir):
+    for root, dirs, files in os.walk(widget_dir):
+        dirs.sort()
+        for filename in sorted(files):
+            path = os.path.join(root, filename)
+            if os.path.splitext(filename)[1].lower() in CODE_SUFFIXES:
+                return filename
+            try:
+                if os.stat(path).st_mode & 0o111:
+                    return filename
+                with open(path, "rb") as fh:
+                    if fh.read(2) == b"#!":
+                        return filename
+            except OSError:
+                return filename
+    return None
+
+
+def read_widget_file(path, widget_id, kind):
+    """Read one widget JSON file. Return (value, error)."""
+    try:
+        if os.path.getsize(path) > MAX_WIDGET_FILE_BYTES:
+            return None, f"{kind} is over 64 KB"
+        with open(path) as fh:
+            return json.load(fh), None
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return None, f"bad {kind}: {exc}"
+
+
+def transform_export(export, template, name):
+    if not isinstance(export, dict):
+        return {}
+    if template == "status" and name == "status":
+        return {"lines": status_lines(export)}
+    if template == "lines" and name == "budget" and "lines" in export:
+        return {"lines": export["lines"]}
+    if template == "items" and name == "list":
+        return {k: export[k] for k in ("title", "items") if k in export}
+    shaped = {}
+    for key in ("lines", "items", "text", "glance", "title"):
+        if key in export:
+            shaped[key] = export[key]
+    return shaped
+
+
+def resolve_widget_data(manifest, own_data, get_export):
+    resolved = {}
+    for name in manifest["reads"]:
+        resolved.update(transform_export(get_export(name),
+                                         manifest["template"], name))
+    if isinstance(own_data, dict):
+        resolved.update(own_data)
+    return resolved
+
+
+def load_folder_widget(widget_dir, source, get_export):
+    folder_name = os.path.basename(os.path.normpath(widget_dir))
+    code = folder_code_file(widget_dir)
+    if code is not None:
+        warn(f"widget {folder_name}: skipped, folder holds code file {code}")
+        return None
+    manifest_path = os.path.join(widget_dir, "widget.json")
+    if not os.path.exists(manifest_path):
+        warn(f"widget {folder_name}: skipped, no widget.json")
+        return None
+    manifest, error = read_widget_file(manifest_path, folder_name, "widget.json")
+    if error is not None:
+        warn(f"widget {folder_name}: skipped, {error}")
+        return None
+    error = validate_manifest(manifest, folder_name)
+    if error is not None:
+        warn(f"widget {folder_name}: skipped, {error}")
+        return None
+    own_data = {}
+    data_path = os.path.join(widget_dir, "data.json")
+    if os.path.exists(data_path):
+        data, error = read_widget_file(data_path, manifest["id"], "data.json")
+        if error is not None:
+            warn(f"widget {manifest['id']}: skipped, {error}")
+            return None
+        own_data = data if isinstance(data, dict) else {}
+    return {
+        "manifest": manifest,
+        "data": resolve_widget_data(manifest, own_data, get_export),
+        "empty_text": "No data yet.",
+        "source": source,
+    }
+
+
+def discover_folder_widgets(data_dir, get_export):
+    records = {}
+    shared_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "widgets")
+    roots = [("shared", shared_root)]
+    seen = {os.path.realpath(shared_root)}
+    data_abs = os.path.abspath(data_dir)
+    for candidate in (os.path.join(data_abs, "widgets"),
+                      os.path.join(os.path.dirname(data_abs), "widgets")):
+        real = os.path.realpath(candidate)
+        if real not in seen:
+            seen.add(real)
+            roots.append(("local", candidate))
+    for source, root in roots:
+        if not os.path.isdir(root):
+            continue
+        for entry in sorted(os.listdir(root)):
+            widget_dir = os.path.join(root, entry)
+            if not os.path.isdir(widget_dir):
+                continue
+            record = load_folder_widget(widget_dir, source, get_export)
+            if record is None:
+                continue
+            wid = record["manifest"]["id"]
+            if source == "shared" and wid in RESERVED_IDS:
+                warn(f"widget {wid}: skipped, shared widgets cannot use a reserved id")
+                continue
+            records[wid] = record
+    return records
+
+
+def load_layout(data_dir):
+    layout = {"order": [], "hidden": []}
+    path = os.path.join(data_dir, "layout.json")
+    if not os.path.exists(path):
+        return layout
+    data = safe_load_json(path, "layout.json")
+    if not isinstance(data, dict):
+        if data is not None:
+            warn("layout: skipped, layout.json must hold an object")
+        return layout
+    for key in ("order", "hidden"):
+        value = data.get(key, [])
+        if isinstance(value, list):
+            layout[key] = [v for v in value
+                           if isinstance(v, str) and ID_RE.match(v)]
+        elif value is not None:
+            warn(f"layout: skipped, {key} must be a list of widget ids")
+    return layout
+
+
+def sort_widgets(widgets, layout):
+    order_index = {wid: i for i, wid in enumerate(layout["order"])}
+
+    def key(widget):
+        wid = widget["manifest"]["id"]
+        if wid in order_index:
+            return (0, order_index[wid], wid)
+        return (1, widget["manifest"]["order"], wid)
+
+    return sorted(widgets, key=key)
+
+
+def widget_title(widget):
+    manifest = widget["manifest"]
+    if widget.get("title_from_data"):
+        title = text_value(widget["data"].get("title"))
+        if title:
+            return title
+    return manifest["title"]
+
+
+def section_wrap(widget, inner):
+    return f'<section><h2>{esc(widget_title(widget))}</h2>{inner}</section>'
+
+
+def render_lines_widget(widget):
+    lines = valid_lines(widget["data"])
+    if lines:
+        rows = "\n".join(
+            f'<li><span class="t">{esc(line["label"])}</span>{esc(line["value"])}</li>'
+            for line in lines)
+    else:
+        rows = f'<p class="big muted">{esc(widget["empty_text"])}</p>'
+    return section_wrap(widget, f'<ul class="money">{rows}</ul>')
+
+
+def render_items_widget(widget):
+    items = valid_items(widget["data"])
+    if not items:
+        return ""
+    items_html = "\n".join(f"<li>{esc(item)}</li>" for item in items)
+    return (f'<section><h2>{esc(widget_title(widget))}</h2>'
+            f"<ul>{items_html}</ul></section>")
+
+
+def render_status_widget(widget):
+    lines = valid_status_lines(widget["data"])
+    if lines:
+        inner = "".join(
+            f'<p class="big {line["state"]}">{esc(line["text"])}</p>'
+            for line in lines)
+    else:
+        inner = f'<p class="big muted">{esc(widget["empty_text"])}</p>'
+    return section_wrap(widget, inner)
+
+
+def render_text_widget(widget):
+    text = text_value(widget["data"].get("text"))
+    if text:
+        if len(text) > MAX_TEXT_CHARS:
+            text = text[:MAX_TEXT_CHARS - 1] + "…"
+        inner = f'<p class="big">{esc(text)}</p>'
+    else:
+        inner = f'<p class="big muted">{esc(widget["empty_text"])}</p>'
+    return section_wrap(widget, inner)
+
+
+def render_agenda_widget(widget):
+    data = widget["data"] if isinstance(widget["data"], dict) else None
+    return section_wrap(widget, f"<ul>{agenda_html(data)}</ul>")
+
+
+def glance_line(widget):
+    data = widget["data"] if isinstance(widget["data"], dict) else {}
+    candidate = text_value(data.get("glance"))
+    if candidate is None:
+        template = widget["manifest"]["template"]
+        if template == "lines":
+            lines = valid_lines(data)
+            candidate = f'{lines[0]["label"]}: {lines[0]["value"]}' if lines else None
+        elif template == "items":
+            items = valid_items(data)
+            candidate = items[0] if items else None
+        elif template == "status":
+            lines = valid_status_lines(data)
+            candidate = lines[0]["text"] if lines else None
+        elif template == "text":
+            candidate = text_value(data.get("text"))
+    if candidate is None:
+        return None
+    if len(candidate) > MAX_GLANCE_CHARS:
+        candidate = candidate[:MAX_GLANCE_CHARS - 1] + "…"
+    return candidate
+
+
+def render_glance_widget(widget):
+    line = glance_line(widget)
+    if line is None:
+        return ""
+    return section_wrap(widget, f'<p class="big">{esc(line)}</p>')
+
+
+def render_widget(widget):
+    if widget["manifest"]["slot"] == "glance":
+        return render_glance_widget(widget)
+    template = widget["manifest"]["template"]
+    if template == "agenda":
+        return render_agenda_widget(widget)
+    if template == "lines":
+        return render_lines_widget(widget)
+    if template == "items":
+        return render_items_widget(widget)
+    if template == "status":
+        return render_status_widget(widget)
+    return render_text_widget(widget)
+
+
 def render(data_dir, now=None, profile="panel"):
     now = now or datetime.now()
-    agenda = load(data_dir, "agenda.json")
-    status = load(data_dir, "status.json")
-    budget = load(data_dir, "budget.json")
-    lst = load(data_dir, "list.json")
+    get_export = make_export_loader(data_dir)
+    widgets_by_id = builtin_widgets(get_export)
+    widgets_by_id.update(discover_folder_widgets(data_dir, get_export))
+    layout = load_layout(data_dir)
+    hidden = set(layout["hidden"])
+    widgets = [w for wid, w in widgets_by_id.items() if wid not in hidden]
+    widgets = [w for w in widgets if profile in w["manifest"]["profiles"]]
+    widgets = sort_widgets(widgets, layout)
     clock = now.strftime("%-I:%M")
     day = now.strftime("%A, %B %-d")
-    month = (budget or {}).get("month", "Money")
     if profile == "kindle":
+        sections_html = "\n".join(render_widget(w) for w in widgets)
         body = f"""<header><div class="clock">{clock}</div><div class="day">{esc(day)}</div></header>
 <main>
-<section><h2>Today</h2><ul>{agenda_html(agenda)}</ul></section>
-<section><h2>Home</h2>{home_html(status)}</section>
-<section><h2>{esc(month)}</h2><ul class="money">{budget_html(budget)}</ul></section>
-{list_html(lst)}
+{sections_html}
 </main>"""
         css = KINDLE_CSS
     else:
+        main_html = "\n".join(render_widget(w) for w in widgets
+                              if w["manifest"]["slot"] in ("main", "glance"))
+        side_html = "\n".join(render_widget(w) for w in widgets
+                              if w["manifest"]["slot"] == "side")
         body = f"""<header><div class="clock">{clock}</div><div class="day">{esc(day)}</div></header>
 <main>
 <div>
-<section><h2>Today</h2><ul>{agenda_html(agenda)}</ul></section>
-{list_html(lst)}
+{main_html}
 </div>
 <div>
-<section><h2>Home</h2>{home_html(status)}</section>
-<section><h2>{esc(month)}</h2><ul class="money">{budget_html(budget)}</ul></section>
+{side_html}
 </div>
 </main>"""
         css = CARD_CSS if profile == "card" else CSS

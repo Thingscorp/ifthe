@@ -1,6 +1,7 @@
-# Briefing widgets (draft spec)
+# Briefing widgets
 
-Status: draft for review. Not implemented yet. This spec takes the
+Status: implemented in briefing/render_briefing.py, with tests in
+tests/test_briefing_widgets.py. This spec takes the
 Pebble model (one manifest per module, declared capabilities, host
 rendered glance surfaces, config as data) and fits it to the briefing.
 
@@ -212,8 +213,9 @@ One bad widget never blanks the morning.
 
 ## Adding a widget, start to finish
 
-1. Copy `briefing/widgets/example-items/` (one example per template
-   ships with the renderer) and rename the folder to your id.
+1. Write `widget.json` from the manifest example above into a new
+   folder named for your id: under `briefing/widgets/` to share it, or
+   under a local `widgets/` folder to keep it private.
 2. Edit `widget.json`: id, title, slot, order, profiles, template,
    reads.
 3. Put today's data in `data.json`, or point `reads` at an export your

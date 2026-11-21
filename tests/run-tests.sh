@@ -15,6 +15,7 @@ run "agenda exporter shaping"           python3 tests/test_agenda_export.py
 run "front-door helpers"                node tests/test_frontdoor.js
 run "dashboard config contracts"        python3 tests/test_dashboard_contracts.py
 run "front-door security/a11y"          python3 tests/test_frontdoor_security.py
+run "briefing widgets"                  python3 tests/test_briefing_widgets.py
 
 echo
 if [ "$rc" -eq 0 ]; then echo "==== ALL TEST SUITES PASS ===="; else echo "==== TEST SUITES FAILED ===="; fi

@@ -31,6 +31,31 @@ class. `--profile card` is 648x480 landscape, pure black on white, for
 the 5.83 inch mono panel class (Good Display GDEY0583T81 and kin).
 `--profile kindle` is portrait, below.
 
+## Widgets
+
+Every section of the briefing is a widget, and anyone can add one with
+a folder of data. No code, no HTML, no CSS: the renderer owns all
+markup and escapes every string. The full contract is in
+[WIDGETS.md](WIDGETS.md).
+
+At render time the renderer scans two roots: `briefing/widgets/` for
+shared widgets, and a `widgets/` folder inside or beside the data
+directory for the household's own. A widget folder holds `widget.json`
+(id, title, version, slot, order, profiles, template, reads) and an
+optional `data.json` in its template's shape. Templates are `lines`
+(at most 4), `items` (at most 6), `status` (at most 3), and `text`
+(at most 220 characters), plus a one line `glance` slot capped at 48
+characters. A widget reads only its own folder and the exports named
+in its `reads` list.
+
+The four built in sections (`today`, `home`, `money`, `list`) are
+widgets on the same path. A local widget with a reserved id replaces
+the built in one. An optional `layout.json` in the data directory can
+reorder widgets and hide them. A folder holding a code file is skipped
+whole, and a bad widget is skipped with one warning line on stderr:
+the page always renders. Settings declarations in `widget.json` are
+validated; v1 does not apply setting values yet.
+
 ## On a Kindle
 
 The proven pattern for old Kindles is not the browser. The home server
