@@ -24,6 +24,14 @@ case "$DATA_ROOT" in
     fail "DATA_ROOT='$DATA_ROOT' is under /Volumes (a mounted/network share). SQLite + databases MUST live on a LOCAL disk. Edit DATA_ROOT and retry." ;;
 esac
 
+# A macOS DATA_ROOT on a non-Mac host can never work: /Users does not exist there,
+# and the deploy otherwise dies later with a cryptic mkdir error.
+if [ "$(uname -s)" != "Darwin" ]; then
+  case "$DATA_ROOT" in
+    /Users/*) fail "DATA_ROOT='$DATA_ROOT' is a macOS path, but this host is not macOS. On Linux use /srv/ifthe. Edit DATA_ROOT in .env and retry." ;;
+  esac
+fi
+
 # Colima (your home server's runtime) mounts $HOME by default but NOT /Users/Shared. If DATA_ROOT is
 # outside $HOME, bind mounts will be EMPTY inside containers unless you've added a Colima
 # mount for it. Warn (don't fail: you may have added the mount via `colima start --edit`).

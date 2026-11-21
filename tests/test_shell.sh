@@ -23,9 +23,12 @@ expect 0 "guard passes again after the injected file is removed" -- bash scripts
 
 echo "== preflight.sh =="
 SECRETS=(VW_ADMIN_TOKEN=x PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x)
-expect 0 "all secrets set + good DATA_ROOT -> ok" -- env DATA_ROOT=/Users/Shared/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
+expect 0 "all secrets set + good DATA_ROOT -> ok" -- env DATA_ROOT=/srv/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
 expect 1 "DATA_ROOT on /Volumes (network mount) -> fail" -- env DATA_ROOT=/Volumes/usb "${SECRETS[@]}" bash scripts/preflight.sh
-expect 1 "empty required secret -> fail" -- env DATA_ROOT=/Users/Shared/ifthe VW_ADMIN_TOKEN= PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x bash scripts/preflight.sh
+if [ "$(uname -s)" != "Darwin" ]; then
+  expect 1 "macOS DATA_ROOT on a non-Mac host -> fail" -- env DATA_ROOT=/Users/Shared/ifthe "${SECRETS[@]}" bash scripts/preflight.sh
+fi
+expect 1 "empty required secret -> fail" -- env DATA_ROOT=/srv/ifthe VW_ADMIN_TOKEN= PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x bash scripts/preflight.sh
 
 echo "== 00-create-dirs.sh =="
 expect 1 "refuses a /Volumes DATA_ROOT" -- env DATA_ROOT=/Volumes/usb/ifthe bash "apps/deploy/00-create-dirs.sh"
