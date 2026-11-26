@@ -149,6 +149,58 @@ with tempfile.TemporaryDirectory() as td:
     check("the mismatched pack installed nothing",
           not root.exists() or not any(root.iterdir()))
 
+# --- ifthe-pack: bad name, bad version, broken pack.json, broken install --
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    root = base / "widgets"
+
+    bad_name = make_pack(base / "badname", name="morning-pack")
+    proc = run(PACK_TOOL, "install", bad_name, root)
+    check("a pack name outside the scoped pattern is refused, naming it",
+          proc.returncode == 1
+          and "pack name must be a scoped name" in proc.stderr,
+          proc.stderr.strip())
+    check("the badly named pack installed nothing",
+          not root.exists() or not any(root.iterdir()))
+
+    bad_version = make_pack(base / "badver", version="1.0")
+    proc = run(PACK_TOOL, "install", bad_version, root)
+    check("a pack version that is not major.minor.patch is refused",
+          proc.returncode == 1
+          and "pack version must be major.minor.patch" in proc.stderr,
+          proc.stderr.strip())
+    check("the badly versioned pack installed nothing",
+          not root.exists() or not any(root.iterdir()))
+
+    broken = make_pack(base / "broken")
+    (broken / "pack.json").write_text("{not json")
+    proc = run(PACK_TOOL, "install", broken, root)
+    lines = [l for l in proc.stderr.splitlines() if l.strip()]
+    check("a malformed pack.json is refused with one error line",
+          proc.returncode == 1 and len(lines) == 1
+          and lines[0].startswith("error:"), proc.stderr.strip())
+    check("the broken pack installed nothing",
+          not root.exists() or not any(root.iterdir()))
+
+    good = make_pack(base / "good")
+    proc = run(PACK_TOOL, "install", good, root)
+    check("the good pack installs before its copy is broken",
+          proc.returncode == 0, proc.stderr.strip())
+    (root / "house-plants" / "widget.json").unlink()
+    proc = run(PACK_TOOL, "install", good, root)
+    check("an installed copy with no widget.json refuses, naming the widget",
+          proc.returncode == 1 and "house-plants" in proc.stderr
+          and "installed copy has no widget.json" in proc.stderr,
+          proc.stderr.strip())
+
+    root2 = base / "widgets2"
+    proc = run(PACK_TOOL, "install", good, root2)
+    (root2 / "house-plants" / "widget.json").write_text("{oops")
+    proc = run(PACK_TOOL, "install", good, root2)
+    check("an unreadable installed widget.json refuses, naming the widget",
+          proc.returncode == 1 and "house-plants" in proc.stderr
+          and "installed copy" in proc.stderr, proc.stderr.strip())
+
 # --- ifthe-index: three record kinds, invalid widget skipped ----------
 with tempfile.TemporaryDirectory() as td:
     base = Path(td)
@@ -204,6 +256,44 @@ with tempfile.TemporaryDirectory() as td:
           and releases[0].get("checksum") == pack_checksum(pack),
           releases[0].get("checksum", "") if releases else "")
 
+# --- ifthe-index: missing source, no README, malformed pack -----------
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+    out = base / "index.json"
+    proc = run(INDEX_TOOL, "build", base / "no-such-folder", out)
+    lines = [l for l in proc.stderr.splitlines() if l.strip()]
+    check("index build on a missing source folder fails with one error line",
+          proc.returncode == 1 and len(lines) == 1
+          and lines[0].startswith("error:")
+          and "no source folder" in lines[0], proc.stderr.strip())
+
+    source = base / "source"
+    source.mkdir()
+    shutil.copytree(EXAMPLES / "weekend-chores", source / "weekend-chores")
+    (source / "weekend-chores" / "README.md").unlink()
+    proc = run(INDEX_TOOL, "build", source, out)
+    index = json.loads(out.read_text()) if out.exists() else {}
+    assets = {a["id"]: a for a in index.get("assets", [])}
+    check("a widget with no README gets a null description",
+          proc.returncode == 0
+          and "weekend-chores" in assets
+          and assets["weekend-chores"].get("description") is None,
+          proc.stderr.strip())
+
+    source2 = base / "source2"
+    bad_pack = source2 / "bad-pack"
+    bad_pack.mkdir(parents=True)
+    shutil.copytree(EXAMPLES / "house-plants", bad_pack / "house-plants")
+    (bad_pack / "pack.json").write_text("{oops")
+    out2 = base / "index2.json"
+    proc = run(INDEX_TOOL, "build", source2, out2)
+    index = json.loads(out2.read_text()) if out2.exists() else {}
+    check("a malformed pack warns and yields no release or listings",
+          proc.returncode == 0
+          and "warning: pack bad-pack: skipped" in proc.stderr
+          and index.get("releases") == [] and index.get("listings") == []
+          and index.get("assets") == [], proc.stderr.strip())
+
 # --- ifthe-gate: LIVE for the examples, REFUSED with reasons ----------
 for wid in WIDGETS:
     proc = run(GATE_TOOL, "check", EXAMPLES / wid)
@@ -229,6 +319,42 @@ with tempfile.TemporaryDirectory() as td:
     check("gate refuses a broken manifest, naming the first failed check",
           proc.returncode == 1
           and proc.stdout.strip() == "REFUSED: missing required field title",
+          proc.stdout.strip())
+
+# --- ifthe-gate: no folder, bad usage, oversize data, shebang ---------
+with tempfile.TemporaryDirectory() as td:
+    base = Path(td)
+
+    proc = run(GATE_TOOL, "check", base / "no-such-widget")
+    check("gate refuses a path that is not a folder",
+          proc.returncode == 1
+          and proc.stdout.strip().startswith("REFUSED: no folder"),
+          proc.stdout.strip())
+
+    for args in ((), ("check",), ("peek", EXAMPLES / "house-plants")):
+        proc = run(GATE_TOOL, *args)
+        check(f"gate with wrong arguments {args} exits 1 with no verdict",
+              proc.returncode == 1 and "LIVE" not in proc.stdout
+              and "REFUSED" not in proc.stdout,
+              proc.stdout.strip() + proc.stderr.strip())
+
+    fat = base / "house-plants"
+    shutil.copytree(EXAMPLES / "house-plants", fat)
+    (fat / "data.json").write_text(json.dumps({"text": "x" * 70000}))
+    proc = run(GATE_TOOL, "check", fat)
+    check("gate refuses a widget whose data.json is over 64 KB",
+          proc.returncode == 1
+          and proc.stdout.strip() == "REFUSED: data.json is over 64 KB",
+          proc.stdout.strip())
+
+    scripted = base / "weekend-chores"
+    shutil.copytree(EXAMPLES / "weekend-chores", scripted)
+    (scripted / "notes.txt").write_text("#!/bin/sh\necho not data\n")
+    proc = run(GATE_TOOL, "check", scripted)
+    check("gate refuses a folder holding a file that starts with a shebang",
+          proc.returncode == 1
+          and proc.stdout.strip()
+          == "REFUSED: folder holds code file notes.txt",
           proc.stdout.strip())
 
 passed = sum(1 for _, ok, _ in results if ok)

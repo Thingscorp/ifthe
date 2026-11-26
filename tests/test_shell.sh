@@ -43,6 +43,30 @@ fi
 expect 1 "empty required secret -> fail" -- env DATA_ROOT=/srv/ifthe VW_ADMIN_TOKEN= PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x HOMEBOX_API_KEY_PEPPER=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx bash scripts/preflight.sh
 expect 1 "short HOMEBOX_API_KEY_PEPPER -> fail" -- env DATA_ROOT=/srv/ifthe "${SECRETS[@]}" HOMEBOX_API_KEY_PEPPER=short bash scripts/preflight.sh
 
+echo "== preflight.sh warnings (warn, never fail) =="
+# docker absent from PATH: symlink every core utility except docker/colima
+# into a scratch bin dir, so `docker compose version` cannot succeed.
+mkdir -p "$TMP/nodocker"
+for f in /usr/bin/* /bin/*; do
+  case "$(basename "$f")" in docker|colima) continue ;; esac
+  ln -sf "$f" "$TMP/nodocker/" 2>/dev/null
+done
+out=$(env PATH="$TMP/nodocker" DATA_ROOT=/srv/ifthe "${SECRETS[@]}" bash scripts/preflight.sh 2>&1); rc=$?
+if [ "$rc" -eq 0 ] && printf '%s' "$out" | grep -q "PREFLIGHT WARNING" && printf '%s' "$out" | grep -qi "docker compose"; then
+  ok "docker compose missing -> exit 0 with a PREFLIGHT WARNING naming docker compose"
+else
+  no "docker compose missing -> exit 0 with a PREFLIGHT WARNING naming docker compose" "rc=$rc"
+fi
+# a colima executable on PATH + DATA_ROOT outside $HOME -> the Colima mount warning
+mkdir -p "$TMP/colimabin"
+printf '#!/bin/sh\nexit 0\n' > "$TMP/colimabin/colima"; chmod +x "$TMP/colimabin/colima"
+out=$(env PATH="$TMP/colimabin:$PATH" DATA_ROOT=/srv/ifthe "${SECRETS[@]}" bash scripts/preflight.sh 2>&1); rc=$?
+if [ "$rc" -eq 0 ] && printf '%s' "$out" | grep -q "PREFLIGHT WARNING: Colima detected" && printf '%s' "$out" | grep -q "DATA_ROOT='/srv/ifthe'"; then
+  ok "colima present + DATA_ROOT outside \$HOME -> exit 0 with the Colima warning naming DATA_ROOT"
+else
+  no "colima present + DATA_ROOT outside \$HOME -> exit 0 with the Colima warning naming DATA_ROOT" "rc=$rc"
+fi
+
 echo "== 00-create-dirs.sh =="
 expect 1 "refuses a /Volumes DATA_ROOT" -- env DATA_ROOT=/Volumes/usb/ifthe bash "apps/deploy/00-create-dirs.sh"
 DR="$TMP/dataroot"

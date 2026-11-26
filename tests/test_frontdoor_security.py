@@ -22,6 +22,11 @@ def check(name, cond, detail=""): results.append((name, bool(cond), detail))
 check("Caddyfile sets X-Content-Type-Options", "X-Content-Type-Options" in CADDYFILE)
 check("Caddyfile sets X-Frame-Options", "X-Frame-Options" in CADDYFILE)
 check("Caddyfile sets Referrer-Policy", "Referrer-Policy" in CADDYFILE)
+check("Caddyfile sets Permissions-Policy", "Permissions-Policy" in CADDYFILE)
+check("Permissions-Policy disables geolocation, microphone, camera",
+      all(s in CADDYFILE for s in ("geolocation=()", "microphone=()", "camera=()")))
+check("Caddyfile removes the Server header", "-Server" in CADDYFILE)
+check("Caddyfile enables gzip encoding", "encode gzip" in CADDYFILE)
 
 # ---- 2. index.html locked-down CSP ----
 # The content="..." value embeds single quotes (e.g. 'self'), so capture a
@@ -34,6 +39,14 @@ check("index.html has Content-Security-Policy meta", csp is not None)
 check("CSP declares default-src 'self'",
       csp is not None and "default-src 'self'" in csp.group(1),
       "" if csp is None else csp.group(1))
+# The remaining directives the shipped CSP actually declares (read from
+# index.html): script-src, connect-src, base-uri, form-action, frame-ancestors.
+csp_body = csp.group(1) if csp is not None else ""
+check("CSP declares script-src 'self'", "script-src 'self'" in csp_body)
+check("CSP declares connect-src 'self'", "connect-src 'self'" in csp_body)
+check("CSP declares base-uri", "base-uri" in csp_body)
+check("CSP declares form-action", "form-action" in csp_body)
+check("CSP declares frame-ancestors", "frame-ancestors" in csp_body)
 
 # ---- 3. app.js is read-only (no state-changing fetch) ----
 # Flag any fetch() whose options object names a mutating HTTP method.

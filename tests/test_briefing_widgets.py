@@ -469,6 +469,426 @@ sl = rb.status_lines({"services_total": 10})
 check("status lines with a total and nothing down keep the all up wording",
       bool(sl) and sl[0]["text"] == "All 10 services up.")
 
+# ---- Quality loop pass 2: sheet cases that were written, now executed ----
+
+def probe_manifest(**over):
+    manifest = {"id": "probe", "title": "Probe", "version": "1.0.0",
+                "slot": "main", "order": 1, "profiles": ["panel"],
+                "template": "items", "reads": []}
+    manifest.update(over)
+    return manifest
+
+
+# Today section: all day label, the six event cap, the empty state.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "agenda.json").write_text(json.dumps({"date": "2026-11-21",
+        "events": [{"time": "", "title": "Parade day", "all_day": True},
+                   {"time": "9:00 AM", "title": "Dentist"}]}))
+    page, _ = render(data)
+    check("all day event renders the All day label",
+          "All day" in section(page, "Today") and "Parade day" in page)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "agenda.json").write_text(json.dumps({"events": [
+        {"time": "9:00 AM", "title": f"Event {i}"} for i in range(1, 8)]}))
+    page, _ = render(data)
+    today = section(page, "Today")
+    check("today section caps seven events at six rows",
+          today.count("<li>") == 6 and "Event 6" in today
+          and "Event 7" not in page)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "agenda.json").write_text(json.dumps({"events": []}))
+    page, _ = render(data)
+    check("empty agenda renders the nothing on the calendar line",
+          "Nothing on the calendar." in section(page, "Today"))
+
+# Home section at render level: backup wording variants.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "status.json").write_text(json.dumps(
+        {"services_up": 10, "services_total": 10, "down": [],
+         "backup_last": "02:15", "backup_ok": False}))
+    page, _ = render(data)
+    check("backup not ok renders the needs a look line",
+          "Backup needs a look at 02:15." in section(page, "Home"))
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "status.json").write_text(json.dumps(
+        {"services_up": 10, "services_total": 10, "down": []}))
+    page, _ = render(data)
+    check("missing backup report renders the no backup line",
+          "No backup report yet." in section(page, "Home"))
+
+# Money section: missing budget, and the heading fallback.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "budget.json").unlink()
+    page, _ = render(data)
+    check("missing budget renders the no snapshot line",
+          "No budget snapshot yet." in section(page, "Money"))
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "budget.json").write_text(json.dumps(
+        {"lines": [{"label": "Left to spend", "value": "$5"}]}))
+    page, _ = render(data)
+    check("budget without a month uses the Money heading",
+          "<h2>Money</h2>" in page
+          and "Left to spend" in section(page, "Money"))
+
+# List section: a missing list.json renders no section at all.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "list.json").unlink()
+    page, _ = render(data)
+    check("missing list renders no list section at all",
+          "<h2>Shopping</h2>" not in page and "<h2>List</h2>" not in page
+          and "Eggs" not in page)
+
+# Lines shaping drops values that are not display text.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "typed-lines", title="Typed lines", template="lines",
+                 data={"lines": [{"label": "Bool line", "value": True},
+                                 {"label": {"nested": 1}, "value": "v"},
+                                 {"label": "Good line", "value": "42"}]})
+    page, _ = render(data)
+    typed = section(page, "Typed lines")
+    check("a line with a boolean value is dropped",
+          "Bool line" not in page)
+    check("a line with an object label is dropped",
+          "Good line" in typed and typed.count("<li>") == 1)
+
+# Discovery: the shared root renders, and a local widget overrides a
+# shared widget with the same non reserved id.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    fake_root = Path(td) / "fake-briefing"
+    for folder, title, item in (
+            ("shared-one", "Shared one", "Shared one item"),
+            ("override-me", "Shared title", "Shared version item")):
+        wdir = fake_root / "widgets" / folder
+        wdir.mkdir(parents=True)
+        (wdir / "widget.json").write_text(json.dumps({
+            "id": folder, "title": title, "version": "1.0.0",
+            "slot": "main", "order": 60, "profiles": ["panel"],
+            "template": "items", "reads": [],
+        }))
+        (wdir / "data.json").write_text(json.dumps({"items": [item]}))
+    write_widget(widgets, "override-me", title="Local title", order=60,
+                 data={"items": ["Local version item"]})
+    old_file = rb.__file__
+    rb.__file__ = str(fake_root / "render_briefing.py")
+    try:
+        page, err = render(data)
+    finally:
+        rb.__file__ = old_file
+    check("a widget in the shared root renders",
+          "Shared one item" in page)
+    check("a local widget overrides a shared widget with the same id",
+          "Local version item" in page
+          and "Shared version item" not in page
+          and "Local title" in page and "Shared title" not in page)
+
+# Reads: own data wins over the export, generic exports are shaped to
+# the allowed keys only, and an unreadable export warns by name.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "budget.json").write_text(json.dumps(
+        {"month": "Testmonth",
+         "lines": [{"label": "Export label", "value": "9"}]}))
+    write_widget(widgets, "override-read", title="Override read",
+                 template="lines", reads=["budget"],
+                 data={"lines": [{"label": "Own label", "value": "1"}]})
+    page, _ = render(data)
+    own = section(page, "Override read")
+    check("data.json keys override the declared export keys",
+          "Own label" in own and "Export label" not in own)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "notes.json").write_text(json.dumps(
+        {"lines": [{"label": "L", "value": "V"}], "items": ["I"],
+         "text": "Note text", "glance": "G", "title": "Note title",
+         "secret": "SECRET", "other": "OTHER"}))
+    resolved = rb.resolve_widget_data(
+        {"reads": ["notes"], "template": "text"}, {},
+        rb.make_export_loader(str(data)))
+    check("a generic export passes only the shaped keys",
+          set(resolved) == {"lines", "items", "text", "glance", "title"}
+          and "secret" not in resolved and "other" not in resolved)
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "weather.json").write_text("{not json")
+    write_widget(widgets, "weather-watcher", title="Weather watcher",
+                 template="text", reads=["weather"])
+    page, err = render(data)
+    check("an unreadable export warns and the widget still renders",
+          "warning: skipping unreadable export weather" in err
+          and "Weather watcher" in page, err.strip())
+
+# An oversize widget.json skips the widget, like oversize data does.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    big = {"id": "big-manifest", "title": "x" * 70000, "version": "1.0.0",
+           "slot": "main", "order": 50, "profiles": ["panel"],
+           "template": "items", "reads": []}
+    write_widget(widgets, "big-manifest", raw_manifest=json.dumps(big))
+    page, err = render(data)
+    check("oversize widget.json skips the widget with a warning",
+          "widget big-manifest: skipped" in err and "over 64 KB" in err,
+          err.strip())
+
+# validate_manifest reasons, called directly, one per broken field.
+reason = rb.validate_manifest(probe_manifest(id="Bad Id"), "probe")
+check("validator names the id for a bad id shape",
+      reason is not None and "id" in reason, str(reason))
+reason = rb.validate_manifest(probe_manifest(id="other"), "probe")
+check("validator names the id and folder on a folder mismatch",
+      reason is not None and "id" in reason and "folder" in reason,
+      str(reason))
+reason = rb.validate_manifest(probe_manifest(version="1.0"), "probe")
+check("validator names the version for a bad version",
+      reason is not None and "version" in reason, str(reason))
+reason = rb.validate_manifest(probe_manifest(order=True), "probe")
+check("validator names the order for a boolean order",
+      reason is not None and "order" in reason, str(reason))
+reason = rb.validate_manifest(
+    probe_manifest(profiles=["panel", "panel"]), "probe")
+check("validator names the profiles for duplicate profiles",
+      reason is not None and "profiles" in reason, str(reason))
+reason = rb.validate_manifest(probe_manifest(reads=["../secret"]), "probe")
+check("validator names the reads for a bad reads name",
+      reason is not None and "reads" in reason, str(reason))
+
+# Settings declaration validation through validate_manifest.
+reason = rb.validate_manifest(probe_manifest(settings=[
+    {"key": "Bad Key", "type": "toggle", "label": "X"}]), "probe")
+check("validator names the key for a bad setting key shape",
+      reason is not None and "key" in reason, str(reason))
+reason = rb.validate_manifest(probe_manifest(settings=[
+    {"key": "ok_key", "type": "slider", "label": "X"}]), "probe")
+check("validator names the type for an unknown setting type",
+      reason is not None and "type" in reason, str(reason))
+reason = rb.validate_manifest(probe_manifest(settings=[
+    {"key": "pick", "type": "select", "label": "Pick",
+     "options": ["a", "b"], "default": "c"}]), "probe")
+check("validator names the default for a select default outside its options",
+      reason is not None and "default" in reason and "options" in reason,
+      str(reason))
+
+# Status template: an unknown state renders as muted.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "weird-state", title="Weird state",
+                 template="status", slot="side",
+                 data={"lines": [{"text": "Weird state line",
+                                  "state": "weird"}]})
+    page, _ = render(data)
+    check("an unknown status state is coerced to muted",
+          '<p class="big muted">Weird state line</p>' in page)
+
+# Text template: exactly at the budget is not cut.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "exact-text", title="Exact text", template="text",
+                 data={"text": "y" * 220})
+    page, _ = render(data)
+    match = re.search(r"<h2>Exact text</h2><p class=\"big\">([^<]+)</p>",
+                      page)
+    out = html.unescape(match.group(1)) if match else ""
+    check("text of exactly 220 characters is not cut",
+          out == "y" * 220, f"len={len(out)}")
+
+# Glance derivation with no glance key, one per template.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "glance-lines", title="Glance lines",
+                 slot="glance", template="lines",
+                 data={"lines": [{"label": "Water", "value": "2L"}]})
+    write_widget(widgets, "glance-items", title="Glance items",
+                 slot="glance", template="items",
+                 data={"items": ["First thing", "Second thing"]})
+    write_widget(widgets, "glance-status", title="Glance status",
+                 slot="glance", template="status",
+                 data={"lines": [{"text": "All systems go",
+                                  "state": "ok"}]})
+    write_widget(widgets, "glance-text", title="Glance text",
+                 slot="glance", template="text",
+                 data={"text": "Just a note"})
+    page, _ = render(data)
+    check("glance derives label colon value from a lines widget",
+          '<p class="big">Water: 2L</p>' in page)
+    check("glance derives the first item from an items widget",
+          '<p class="big">First thing</p>' in page
+          and "Second thing" not in page)
+    check("glance derives the first line text from a status widget",
+          '<p class="big">All systems go</p>' in page)
+    check("glance derives the text from a text widget",
+          '<p class="big">Just a note</p>' in page)
+
+# A folder widget with no data at all renders its empty text.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "empty-widget", title="Empty widget",
+                 template="text")
+    page, _ = render(data)
+    check("a folder widget with no data renders the no data line",
+          "No data yet." in section(page, "Empty widget"))
+
+# settings.json shapes: a non object top level is ignored with a
+# warning; a non object per widget value counts as no supplied values.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "listed", title="Listed",
+                 data={"items": ["Listed item"]})
+    (data / "settings.json").write_text(json.dumps(["not", "an", "object"]))
+    page, err = render(data)
+    check("a non object settings.json is ignored with a warning",
+          "Listed item" in page
+          and "settings.json must hold an object" in err, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "per-widget", title="Per widget",
+                 data={"items": [f"Pw {i}" for i in range(1, 6)]},
+                 settings=[{"key": "max_items", "type": "select",
+                            "label": "Show at most", "options": ["2", "6"],
+                            "default": "2"}])
+    (data / "settings.json").write_text(json.dumps({"per-widget": 42}))
+    page, err = render(data)
+    check("a non object per widget settings value counts as no values",
+          "Pw 2" in page and "Pw 3" not in page and err == "",
+          err.strip())
+
+# Settings resolution: rejected values warn and fall back, per type.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "toggler", title="Toggler",
+                 data={"items": ["Toggler item"]},
+                 settings=[{"key": "show_title", "type": "toggle",
+                            "label": "Show title", "default": True}])
+    (data / "settings.json").write_text(json.dumps(
+        {"toggler": {"show_title": "yes"}}))
+    page, err = render(data)
+    check("an invalid toggle value warns and falls back to the default",
+          "widget toggler: setting show_title rejected, using default"
+          in err and "<h2>Toggler</h2>" in page, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "numbered", title="Numbered",
+                 data={"items": ["Numbered item"]},
+                 settings=[{"key": "title", "type": "input",
+                            "label": "Heading",
+                            "default": "Default heading"}])
+    (data / "settings.json").write_text(json.dumps(
+        {"numbered": {"title": 42}}))
+    page, err = render(data)
+    check("a numeric value for an input setting is rejected with a warning",
+          "widget numbered: setting title rejected, using default" in err
+          and "<h2>Default heading</h2>" in page, err.strip())
+
+# Custom settings: an invalid value warns; a valid one changes nothing.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "custom", title="Custom",
+                 data={"items": ["Custom item"]},
+                 settings=[{"key": "accent_color", "type": "input",
+                            "label": "Accent", "default": "sage"}])
+    (data / "settings.json").write_text(json.dumps(
+        {"custom": {"accent_color": 42}}))
+    page, err = render(data)
+    check("an invalid value for a custom setting warns",
+          "widget custom: setting accent_color rejected, using default"
+          in err, err.strip())
+    (data / "settings.json").write_text(json.dumps(
+        {"custom": {"accent_color": "plum"}}))
+    page_with, err_with = render(data)
+    (data / "settings.json").unlink()
+    page_without, _ = render(data)
+    check("a valid custom setting value does not change the page",
+          page_with == page_without and err_with == "", err_with.strip())
+
+# layout.json shapes: a non list order warns, a non object file warns,
+# and invalid order entries drop while valid ones still sort.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "layout.json").write_text(json.dumps({"order": "money"}))
+    page, err = render(data)
+    check("a non list layout order warns and is ignored",
+          "layout: skipped, order must be a list of widget ids" in err
+          and "Today" in page, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "layout.json").write_text(json.dumps(["money", "today"]))
+    page, err = render(data)
+    check("a non object layout.json warns and is ignored",
+          "layout: skipped, layout.json must hold an object" in err
+          and "Today" in page, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    (data / "layout.json").write_text(json.dumps(
+        {"order": ["Bad Id", 42, "money", "today"]}))
+    page, err = render(data, profile="kindle")
+    check("invalid layout order entries are dropped, valid ones still sort",
+          page.index("November") < page.index("Today") and err == "",
+          err.strip())
+
+# Failure isolation: no widget.json, and malformed data.json.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    bare = widgets / "no-manifest"
+    bare.mkdir()
+    (bare / "data.json").write_text(json.dumps({"items": ["Ghost item"]}))
+    write_widget(widgets, "baddata", title="Bad data", template="items",
+                 reads=["list"], data={"items": ["Placeholder"]})
+    (widgets / "baddata" / "data.json").write_text("{oops")
+    write_widget(widgets, "good2", title="Good two",
+                 data={"items": ["Good two item"]})
+    page, err = render(data)
+    check("a widget folder with no widget.json is skipped with a warning",
+          "widget no-manifest: skipped, no widget.json" in err,
+          err.strip())
+    check("a widget with malformed data.json is skipped whole",
+          "widget baddata: skipped" in err and "bad data.json" in err
+          and "Bad data" not in page and "Ghost item" not in page,
+          err.strip())
+    check("other widgets still render beside the failures",
+          "Good two item" in page and "Today" in page)
+
+# Code detection: the executable bit and a shebang both skip the folder.
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    wdir = write_widget(widgets, "exec-note", title="Exec note",
+                        data={"items": ["Should not render"]},
+                        extra={"notes.txt": "plain notes\n"})
+    (wdir / "notes.txt").chmod(0o755)
+    page, err = render(data)
+    check("a plain file with the executable bit set skips the folder",
+          "Exec note" not in page
+          and "widget exec-note: skipped" in err
+          and "code file notes.txt" in err, err.strip())
+
+with tempfile.TemporaryDirectory() as td:
+    data, widgets = make_case(Path(td))
+    write_widget(widgets, "shebang-note", title="Shebang note",
+                 data={"items": ["Should not render"]},
+                 extra={"data.txt": "#!/bin/sh\necho hi\n"})
+    page, err = render(data)
+    check("a file starting with a shebang skips the folder",
+          "Shebang note" not in page
+          and "widget shebang-note: skipped" in err
+          and "code file data.txt" in err, err.strip())
+
 passed = sum(1 for _, ok, _ in results if ok)
 fails = [(n, d) for n, ok, d in results if not ok]
 print(f"\nbriefing_widgets: {passed}/{len(results)} checks passed")
