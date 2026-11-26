@@ -454,6 +454,21 @@ with tempfile.TemporaryDirectory() as td:
               pspec["css"] in page and "ifthe morning briefing" in page,
               err.strip())
 
+# status lines never print None for missing counts (quality loop D-001)
+sl = rb.status_lines({"down": ["AdGuard Home"]})
+check("status lines with down services but no counts name the down services",
+      bool(sl) and sl[0]["text"] == "Services down: AdGuard Home."
+      and sl[0]["state"] == "warn")
+sl = rb.status_lines({"services_up": 3, "services_total": 10, "down": ["Mealie"]})
+check("status lines with counts keep the counted wording",
+      bool(sl) and sl[0]["text"] == "3 of 10 services up. Down: Mealie.")
+sl = rb.status_lines({"backup_last": "02:15", "backup_ok": True})
+check("status lines with no counts and nothing down show only the backup line",
+      [l["text"] for l in sl] == ["Backup ran at 02:15."])
+sl = rb.status_lines({"services_total": 10})
+check("status lines with a total and nothing down keep the all up wording",
+      bool(sl) and sl[0]["text"] == "All 10 services up.")
+
 passed = sum(1 for _, ok, _ in results if ok)
 fails = [(n, d) for n, ok, d in results if not ok]
 print(f"\nbriefing_widgets: {passed}/{len(results)} checks passed")

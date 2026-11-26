@@ -200,16 +200,23 @@ def status_lines(status):
     """Shape a status export into status template lines."""
     if not isinstance(status, dict):
         return []
-    up, total = status.get("services_up"), status.get("services_total")
+    up = text_value(status.get("services_up"))
+    total = text_value(status.get("services_total"))
     down_raw = status.get("down") or []
     down = []
     if isinstance(down_raw, list):
         down = [v for v in (text_value(item) for item in down_raw) if v is not None]
     if down:
-        lines = [{"text": f"{up} of {total} services up. Down: {', '.join(down)}.",
-                  "state": "warn"}]
-    else:
+        if up is not None and total is not None:
+            lines = [{"text": f"{up} of {total} services up. Down: {', '.join(down)}.",
+                      "state": "warn"}]
+        else:
+            lines = [{"text": f"Services down: {', '.join(down)}.",
+                      "state": "warn"}]
+    elif total is not None:
         lines = [{"text": f"All {total} services up.", "state": "ok"}]
+    else:
+        lines = []
     if status.get("backup_last"):
         ok = status.get("backup_ok", True)
         word = "ran" if ok else "needs a look"

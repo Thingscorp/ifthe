@@ -84,6 +84,31 @@ for f in COMPOSE:
         if not is_created(sub):
             fail(f"[mounts] {Path(f).name}: bind mount ${{DATA_ROOT}}/{sub} has no matching dir in 00-create-dirs.sh")
 
+# ---- 4. health gating, restart policy, and log bounds (quality loop) ----
+# The emulator findings encoded in the compose files: the five gating
+# healthchecks carry start_period 60s, dependents wait for service_healthy,
+# every service restarts unless-stopped, and logs are bounded per stack.
+texts = {Path(f).name: Path(f).read_text() for f in COMPOSE}
+sp_total = sum(t.count("start_period: 60s") for t in texts.values())
+if sp_total != 5:
+    fail(f"[gating] expected 5 healthchecks with start_period: 60s, found {sp_total}")
+for fname, want in (("docker-compose.docs.yml", 3), ("docker-compose.family.yml", 4)):
+    got = texts[fname].count("condition: service_healthy")
+    if got != want:
+        fail(f"[gating] {fname}: expected {want} service_healthy conditions, found {got}")
+for name in ("paperless-redis", "paperless-db", "paperless-gotenberg",
+             "nextcloud-db", "nextcloud-redis"):
+    if not any(name + ":" in t for t in texts.values()):
+        fail(f"[gating] gating service {name} not found in any compose file")
+for fname, t in texts.items():
+    if "restart: unless-stopped" not in t:
+        fail(f"[restart] {fname}: no service uses restart: unless-stopped")
+    for bad in ("restart: always", 'restart: "no"', "restart: on-failure"):
+        if bad in t:
+            fail(f"[restart] {fname}: unexpected restart policy {bad}")
+    if 'max-size: "10m"' not in t or 'max-file: "3"' not in t:
+        fail(f"[logging] {fname}: json-file log bounds (10m x 3) missing")
+
 # ---- report ----
 print(f"compose-contracts: {len(COMPOSE)} files, {len(host_ports)} host ports, {len(created)} created dirs")
 print("host ports:", ", ".join(sorted(host_ports)))

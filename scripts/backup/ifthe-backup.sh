@@ -3,11 +3,14 @@
 # ifthe :: backups (3-2-1)
 # ------------------------------------------------------------
 # Mirrors the "Backups (3-2-1)" section of apps/deploy/README.md:
-#   1. restic snapshot of the bind-mounted data under $DATA_ROOT (caches excluded)
-#   2. logical DB dumps (don't copy live DB files):
+#   1. logical DB dumps (don't copy live DB files):
 #        - Paperless (Postgres)  via  docker exec paperless-db pg_dump
 #        - Nextcloud (MariaDB)    via  docker exec nextcloud-db mariadb-dump,
 #          with occ maintenance:mode flipped on around the dump
+#   2. restic snapshot of the bind-mounted data under $DATA_ROOT (caches excluded)
+#
+# The dumps run FIRST so the snapshot taken in the same run includes them.
+# A snapshot taken before the dumps would only ever hold last run's dumps.
 #
 # Read-only toward your money: this touches NOTHING financial: no bank, no
 # SimpleFIN, no Actual. Back Actual up with its in-app Settings -> Export.
@@ -37,7 +40,44 @@ if [ -z "$DATA_ROOT" ]; then
   exit 0
 fi
 
-# --- 1. restic snapshot of the bind-mounted data ------------------------------
+# --- 1. logical database dumps ------------------------------------------------
+if ! command -v docker >/dev/null 2>&1; then
+  skip "docker not installed: skipping database dumps."
+else
+  # True only if a container with this exact name is currently running.
+  running(){ docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$1"; }
+
+  today="$(date +%F)"
+
+  # Paperless (Postgres): logical dump, never a copy of the live files.
+  if running paperless-db; then
+    echo "==> paperless: pg_dump -> $DATA_ROOT/paperless/export/pg-$today.sql"
+    mkdir -p "$DATA_ROOT/paperless/export"
+    docker exec paperless-db pg_dump -U paperless paperless \
+      > "$DATA_ROOT/paperless/export/pg-$today.sql"
+  else
+    skip "paperless-db container not running: skipping Postgres dump."
+  fi
+
+  # Nextcloud (MariaDB): maintenance mode around the dump, per the README.
+  if running nextcloud-db; then
+    echo "==> nextcloud: mariadb-dump -> $DATA_ROOT/nextcloud/db-$today.sql"
+    mkdir -p "$DATA_ROOT/nextcloud"
+    # Maintenance mode is best-effort: only when the app container is up.
+    if running nextcloud; then
+      docker exec nextcloud nextcloud occ maintenance:mode --on || true
+    fi
+    docker exec nextcloud-db sh -c 'mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" nextcloud' \
+      > "$DATA_ROOT/nextcloud/db-$today.sql"
+    if running nextcloud; then
+      docker exec nextcloud nextcloud occ maintenance:mode --off || true
+    fi
+  else
+    skip "nextcloud-db container not running: skipping MariaDB dump."
+  fi
+fi
+
+# --- 2. restic snapshot of the bind-mounted data ------------------------------
 if ! command -v restic >/dev/null 2>&1; then
   skip "restic not installed: skipping the data snapshot."
 elif [ -z "$RESTIC_REPO" ]; then
@@ -53,45 +93,6 @@ else
   fi
   restic -r "$RESTIC_REPO" backup "$DATA_ROOT" \
     --exclude "$DATA_ROOT/**/cache"
-fi
-
-# --- 2. logical database dumps ------------------------------------------------
-if ! command -v docker >/dev/null 2>&1; then
-  skip "docker not installed: skipping database dumps."
-  echo "Done."
-  exit 0
-fi
-
-# True only if a container with this exact name is currently running.
-running(){ docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$1"; }
-
-today="$(date +%F)"
-
-# Paperless (Postgres): logical dump, never a copy of the live files.
-if running paperless-db; then
-  echo "==> paperless: pg_dump -> $DATA_ROOT/paperless/export/pg-$today.sql"
-  mkdir -p "$DATA_ROOT/paperless/export"
-  docker exec paperless-db pg_dump -U paperless paperless \
-    > "$DATA_ROOT/paperless/export/pg-$today.sql"
-else
-  skip "paperless-db container not running: skipping Postgres dump."
-fi
-
-# Nextcloud (MariaDB): maintenance mode around the dump, per the README.
-if running nextcloud-db; then
-  echo "==> nextcloud: mariadb-dump -> $DATA_ROOT/nextcloud/db-$today.sql"
-  mkdir -p "$DATA_ROOT/nextcloud"
-  # Maintenance mode is best-effort: only when the app container is up.
-  if running nextcloud; then
-    docker exec nextcloud nextcloud occ maintenance:mode --on || true
-  fi
-  docker exec nextcloud-db sh -c 'mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" nextcloud' \
-    > "$DATA_ROOT/nextcloud/db-$today.sql"
-  if running nextcloud; then
-    docker exec nextcloud nextcloud occ maintenance:mode --off || true
-  fi
-else
-  skip "nextcloud-db container not running: skipping MariaDB dump."
 fi
 
 echo "Done."

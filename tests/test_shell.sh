@@ -10,7 +10,7 @@ no(){ FAIL=$((FAIL+1)); echo "  FAIL  $1   [$2]"; }
 # expect <rc> <desc> -- cmd...
 expect(){ local want=$1 desc=$2; shift 3; local out rc; out=$("$@" 2>&1); rc=$?; if [ "$rc" -eq "$want" ]; then ok "$desc"; else no "$desc" "want rc=$want got rc=$rc"; fi; }
 
-TMP=$(mktemp -d); trap 'rm -rf "$TMP" scripts/actual-export/__qa_tmp.js' EXIT
+TMP=$(mktemp -d); trap '[ -f "$TMP/app.js.bak" ] && cp "$TMP/app.js.bak" apps/dashboard/frontdoor/app.js 2>/dev/null; rm -rf "$TMP" scripts/actual-export/__qa_tmp.js' EXIT
 # docker shim that succeeds, for scripts that probe docker
 mkdir -p "$TMP/bin"; printf '#!/bin/sh\nexit 0\n' > "$TMP/bin/docker"; chmod +x "$TMP/bin/docker"
 
@@ -20,6 +20,14 @@ printf 'api.addTransactions([{}])\n' > scripts/actual-export/__qa_tmp.js
 expect 1 "guard FAILS when a money-mutating call is injected" -- bash scripts/guard-readonly.sh
 rm -f scripts/actual-export/__qa_tmp.js
 expect 0 "guard passes again after the injected file is removed" -- bash scripts/guard-readonly.sh
+
+echo "== guard-readonly-ui.sh =="
+expect 0 "ui guard passes on the clean tree" -- bash scripts/guard-readonly-ui.sh
+cp apps/dashboard/frontdoor/app.js "$TMP/app.js.bak"
+printf '\nfetch("/x", {method: "POST"});\n' >> apps/dashboard/frontdoor/app.js
+expect 1 "ui guard FAILS when a mutating fetch is injected into app.js" -- bash scripts/guard-readonly-ui.sh
+cp "$TMP/app.js.bak" apps/dashboard/frontdoor/app.js
+expect 0 "ui guard passes again after app.js is restored" -- bash scripts/guard-readonly-ui.sh
 
 echo "== preflight.sh =="
 SECRETS=(VW_ADMIN_TOKEN=x PAPERLESS_DB_PASS=x PAPERLESS_SECRET_KEY=x PAPERLESS_ADMIN_PASSWORD=x NEXTCLOUD_DB_ROOT_PASS=x NEXTCLOUD_DB_PASS=x NEXTCLOUD_ADMIN_PASSWORD=x HOMEBOX_API_KEY_PEPPER=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)

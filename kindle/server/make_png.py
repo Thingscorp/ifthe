@@ -61,8 +61,24 @@ def main():
                             "--screenshot=" + out, "file://" + html])
         if r.returncode != 0:
             return r.returncode
+        size = png_size(out)
+        if size != (args.width, args.height):
+            print("screenshot is %s, expected %dx%d; not writing a wrong-sized PNG"
+                  % (size, args.width, args.height), file=sys.stderr)
+            os.unlink(out)
+            return 1
     print("wrote", out)
     return 0
+
+
+def png_size(path):
+    """(width, height) from a PNG's IHDR, or None when the file is not a PNG."""
+    import struct
+    with open(path, "rb") as fh:
+        head = fh.read(24)
+    if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return struct.unpack(">II", head[16:24])
 
 
 if __name__ == "__main__":
